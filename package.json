@@ -1,0 +1,21 @@
+{
+  "name": "tokens-api-node",
+  "version": "0.1.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "start": "node main.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Martin Grödl <martin@process.studio> (https://process.studio)",
+  "license": "AGPL-3.0",
+  "engines": {
+    "node": "14.16.1",
+    "npm": "7.8.0"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "got": "^11.8.2"
+  }
+}
