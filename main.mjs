@@ -38,6 +38,16 @@ async function request(method='GET', path="", options={}) {
   return got(DB.URL + path, options);
 }
 
+async function create_db(name) {
+  const res = request('put', `/${name}`);
+  return res.body;
+}
+
+async function delete_db(name) {
+  const res = request('delete', `/${name}`);
+  return res.body;
+}
+
 async function put_token(token) {
   const res = await request('post', `/${DB.TOKENS_DB}`, {json: token});
   return res.body; // { ok: true, id: '', rev: '' }
