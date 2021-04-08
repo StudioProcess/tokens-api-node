@@ -1,5 +1,8 @@
 import { readFileSync } from 'fs';
 import got from 'got';
+import { inspect } from 'util';
+
+inspect.defaultOptions.depth = null;
 
 const DB = JSON.parse(readFileSync('./db.config.json'));
 
@@ -197,6 +200,61 @@ async function get_uuids(n=1) {
   return res.body;
 }
 
+let color = -1;
+
+async function request_interaction() {
+  color = color +1 % 10;
+  const next_color = color;
+  const res = await request('post', `/${DB.interactions_db}`, {
+    json: { 
+      'status': 'incomplete',
+      'color': next_color,
+    }
+  });
+  res.body.color = next_color;
+  return res.body;
+}
+
+async function deposit_interaction(id, keywords) {
+  let res = await request('get', `/${DB.interactions_db}/${id}`);
+  let int = res.body;
+  int.status = 'pending';
+  int.keywords = keywords;
+  res = await request('post', `/${DB.interactions_db}`, {json: int});
+  return res.body;
+}
+
+async function get_single_interaction_updates(id, since=0) {
+  let res = await request('get', `/${DB.interactions_db}/_changes`, {
+    searchParams: {
+      feed: 'longpoll',
+      filter: '_doc_ids',
+      doc_ids: JSON.stringify([id]),
+      include_docs: true,
+      since,
+    }
+  });
+  const result = res.body.results[0]
+  const doc = result.doc;
+  doc.seq = result.seq;
+  return doc;
+}
+
+async function update_interaction(id, queue_position, token_id=null) {
+  let res = await request('get', `/${DB.interactions_db}/${id}`);
+  let int = res.body;
+  if (token_id != null) {
+    int.queue_position = 0;
+    int.token_id = token_id;
+    int.status = 'completed';
+  } else {
+    int.queue_position = queue_position;
+    int.status = 'queuing';
+  }
+  res = await request('post', `/${DB.interactions_db}`, {json: int});
+  return res.body;
+}
+
 
 (async () => {
   // const res = await put_token({ generated: (new Date()).toISOString() });
@@ -227,6 +285,35 @@ async function get_uuids(n=1) {
   // console.log(await get_tokens_until_id('05bf606cc076a69b1acc269db2f6156c', 2, false)); // 9
   
   // console.log(await get_tokens_until_id('05bf606c45c080b7fc6803e838a54d22', 2, true)); // 1
-  console.log(await get_tokens_until_id('05bf606c35e36224244b8f76279a4190', 2, true)); // 0
+  // console.log(await get_tokens_until_id('05bf606c35e36224244b8f76279a4190', 2, true)); // 0
+  let res = await request_interaction();
+  console.log(res);
+  
+  let res2 = await deposit_interaction(res.id, ['storm', 'earth', 'connection']);
+  console.log(res2);
+  
+  let seq = 'now';
+  function get_next_update() {
+    get_single_interaction_updates(res.id, seq).then(body => {
+      console.log('update received:', inspect(body));
+      seq = body.seq;
+      if (body.status != 'completed') get_next_update();
+    });
+  }
+  get_next_update();
+  
+  // get_single_interaction_updates(res.id, 'now').then(body => {
+  //   console.log('update received:', inspect(body));
+  // });
+
+  let res3 = await update_interaction(res.id, 3);
+  console.log(res3);
+  
+  
+  let res4 = await update_interaction(res.id, null, 'xyz');
+  console.log(res4);
+  
+
+  
 })();
 
