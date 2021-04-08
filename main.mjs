@@ -51,6 +51,19 @@ async function delete_db(name) {
   return res.body;
 }
 
+async function create_filters(db_name) {
+  const res = request('post', `/${DB.interactions_db}`, {
+    json: {
+      _id: "_design/filters",
+      filters: {
+        "new": "function(doc, req) { return doc.status == 'new'; }",
+        "updates": "function(doc, req) { return doc._id == req.query.doc_id && (doc.status == 'waiting' || doc.status == 'done'); }"
+      }
+    }
+  });
+  return res.body;
+}
+
 async function put_token(token) {
   const res = await request('post', `/${DB.tokens_db}`, {json: token});
   return res.body; // { ok: true, id: '', rev: '' }
