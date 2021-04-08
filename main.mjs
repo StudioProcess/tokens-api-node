@@ -1,10 +1,7 @@
+import { readFileSync } from 'fs';
 import got from 'got';
 
-const DB = {
-  'URL': 'http://localhost:5984',
-  'USER': 'admin2',
-  'PASS': 'symbolic_unicorn',
-}
+const DB = JSON.parse(readFileSync('./db.config.json'));
 
 function rnd(min, max) {
   if (max == undefined) {
@@ -42,12 +39,12 @@ async function request(method='GET', path="", options={}) {
 }
 
 async function put_token(token) {
-  const res = await request('post', '/tokens', {json: token});
+  const res = await request('post', `/${DB.TOKENS_DB}`, {json: token});
   return res.body; // { ok: true, id: '', rev: '' }
 }
 
 async function get_single_token(id) {
-  const res = await request('get', `/tokens/${id}`);
+  const res = await request('get', `/${DB.TOKENS_DB}/${id}`);
   return res.body; // { _id: '', _rev: '', token data }
 }
 
@@ -64,7 +61,7 @@ async function get_tokens_offset(offset=0, count=2, newest_first=true) {
     searchParams.descending = !searchParams.descending;
   }
   
-  const res = request('get', '/tokens/_all_docs', {searchParams});
+  const res = request('get', `/${DB.TOKENS_DB}/_all_docs`, {searchParams});
   
   const body = res.body;
   body.rows = body.rows.map(row => row.doc);
@@ -103,7 +100,7 @@ async function get_tokens_from_id(start_id, count=2, newest_first=true) {
     'start_key': `"${start_id}"`
   };
   
-  const res = await request('get', '/tokens/_all_docs', {searchParams});
+  const res = await request('get', `/${DB.TOKENS_DB}/_all_docs`, {searchParams});
   
   const body = res.body;
   body.rows = body.rows.map(row => row.doc);
@@ -120,7 +117,7 @@ async function get_tokens_from_id(start_id, count=2, newest_first=true) {
   if (body.offset > 0) {
     searchParams.limit = 2;
     searchParams.descending = !searchParams.descending;
-    const res_prev = await request('get', '/tokens/_all_docs', {searchParams});
+    const res_prev = await request('get', `/${DB.TOKENS_DB}/_all_docs`, {searchParams});
     res_prev.body.rows = res_prev.body.rows.map(row => row.doc);
     body.prev = res_prev.body.rows[1];
   } else {
@@ -138,7 +135,7 @@ async function get_tokens_until_id(end_id, count=2, newest_first=true) {
     'start_key': `"${end_id}"`
   };
   
-  const res = await request('get', '/tokens/_all_docs', {searchParams});
+  const res = await request('get', `/${DB.TOKENS_DB}/_all_docs`, {searchParams});
   
   const body = res.body;
   body.rows = body.rows.map(row => row.doc);
@@ -156,7 +153,7 @@ async function get_tokens_until_id(end_id, count=2, newest_first=true) {
   if (body.offset > 0) {
     searchParams.limit = 2;
     searchParams.descending = !searchParams.descending;
-    const res_next = await request('get', '/tokens/_all_docs', {searchParams});
+    const res_next = await request('get', `/${DB.TOKENS_DB}/_all_docs`, {searchParams});
     res_next.body.rows = res_next.body.rows.map(row => row.doc);
     body.next = res_next.body.rows[1];
   } else {

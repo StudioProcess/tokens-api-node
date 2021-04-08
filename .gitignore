@@ -3,3 +3,4 @@ node_modules
 venv
 .venv
 .nyc_output
+db.config.json
