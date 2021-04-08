@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "start": "node main.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tap"
   },
   "keywords": [],
   "author": "Martin Grödl <martin@process.studio> (https://process.studio)",
@@ -17,5 +17,8 @@
   "dependencies": {
     "express": "^4.17.1",
     "got": "^11.8.2"
+  },
+  "devDependencies": {
+    "tap": "^15.0.2"
   }
 }
