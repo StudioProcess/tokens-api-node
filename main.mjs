@@ -1,37 +1,19 @@
 import { readFileSync } from 'fs';
 import got from 'got';
-import { inspect } from 'util';
+import { inspect, sleep } from './utils.mjs';
 
-inspect.defaultOptions.depth = null;
+export const DB = JSON.parse(readFileSync('./db.config.json'));
 
-const DB = JSON.parse(readFileSync('./db.config.json'));
+/* 
+  databases:
+  tokens { _id, generated, keywords, svg, original_png }
+  interactions { _id, color, status, queue_position, token_id }
+  
+  interaction status progression:
+  incomplete -> new -> waiting -> done
+*/
 
-function rnd(min, max) {
-  if (max == undefined) {
-    if (min == undefined) {
-      min = 0;
-      max = 1;
-    } else {
-      // use value given as max
-      max = min;
-      min = 0;
-    }
-  }
-  return min + Math.random() * (max-min);
-}
-
-function random_svg() {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" style="stroke:black; stroke-width:10; fill:none;">
-  <circle cx="${rnd(1000)}" cy="${rnd(1000)}" r="${rnd(1000/3, 1000)}"/>
-  <line x1="${rnd(1000)}" y1="${rnd(1000)}" x2="${rnd(1000)}" y2="${rnd(1000)}"/>
-  <line x1="${rnd(1000)}" y1="${rnd(1000)}" x2="${rnd(1000)}" y2="${rnd(1000)}"/>
-</svg>`;
-}
-
-// token { _id, generated, keywords, svg, original_png }
-// interaction { _id, color, completed?, queue_position, token }
-
-async function request(method='GET', path="", options={}) {
+export async function request(method='get', path='', options={}) {
   options = Object.assign({
     method,
     username: DB.user,
@@ -41,17 +23,17 @@ async function request(method='GET', path="", options={}) {
   return got(DB.url + path, options);
 }
 
-async function create_db(name) {
+export async function create_db(name) {
   const res = request('put', `/${name}`);
   return res.body;
 }
 
-async function delete_db(name) {
+export async function delete_db(name) {
   const res = request('delete', `/${name}`);
   return res.body;
 }
 
-async function create_filters(db_name) {
+export async function create_filters(db_name) {
   const res = request('post', `/${DB.interactions_db}`, {
     json: {
       _id: "_design/filters",
@@ -64,17 +46,17 @@ async function create_filters(db_name) {
   return res.body;
 }
 
-async function put_token(token) {
+export async function put_token(token) {
   const res = await request('post', `/${DB.tokens_db}`, {json: token});
   return res.body; // { ok: true, id: '', rev: '' }
 }
 
-async function get_single_token(id) {
+export async function get_single_token(id) {
   const res = await request('get', `/${DB.tokens_db}/${id}`);
   return res.body; // { _id: '', _rev: '', token data }
 }
 
-async function get_tokens_offset(offset=0, count=2, newest_first=true) {
+export async function get_tokens_offset(offset=0, count=2, newest_first=true) {
   if (offset < 0) offset = -1;
   
   const searchParams = {
@@ -118,7 +100,7 @@ async function get_tokens_offset(offset=0, count=2, newest_first=true) {
   // TODO: throw error when offset >= total_rows
 }
 
-async function get_tokens_from_id(start_id, count=2, newest_first=true) {
+export async function get_tokens_from_id(start_id, count=2, newest_first=true) {
   const searchParams = {
     'include_docs': true,
     'limit': count + 1,
@@ -153,7 +135,7 @@ async function get_tokens_from_id(start_id, count=2, newest_first=true) {
   return body;
 }
 
-async function get_tokens_until_id(end_id, count=2, newest_first=true) {
+export async function get_tokens_until_id(end_id, count=2, newest_first=true) {
   const searchParams = {
     'include_docs': true,
     'limit': count + 1,
@@ -190,7 +172,7 @@ async function get_tokens_until_id(end_id, count=2, newest_first=true) {
   return body;
 }
 
-async function get_tokens(offset=0, start_id=null, end_id=null, count=2, newest_first=true) {
+export async function get_tokens(offset=0, start_id=null, end_id=null, count=2, newest_first=true) {
   if (offset != null) {
     return get_tokens_offset(offset, count, newest_first);
   }
@@ -228,7 +210,7 @@ async function request_interaction() {
   return res.body;
 }
 
-async function deposit_interaction(id, keywords) {
+export async function deposit_interaction(id, keywords) {
   let res = await request('get', `/${DB.interactions_db}/${id}`);
   let int = res.body;
   int.status = 'new';
@@ -237,7 +219,7 @@ async function deposit_interaction(id, keywords) {
   return res.body;
 }
 
-async function get_single_interaction_updates(id, since=0) {
+export async function get_single_interaction_updates(id, since=0) {
   const res = await request('get', `/${DB.interactions_db}/_changes`, {
     searchParams: {
       feed: 'longpoll',
@@ -253,7 +235,7 @@ async function get_single_interaction_updates(id, since=0) {
   return doc;
 }
 
-async function update_interaction(id, queue_position, token_id=null) {
+export async function update_interaction(id, queue_position, token_id=null) {
   let res = await request('get', `/${DB.interactions_db}/${id}`);
   let int = res.body;
   if (token_id != null) {
@@ -268,7 +250,7 @@ async function update_interaction(id, queue_position, token_id=null) {
   return res.body;
 }
 
-async function get_new_interaction_updates(since=0) {
+export async function get_new_interaction_updates(since=0) {
   const res = await request('get', `/${DB.interactions_db}/_changes`, {
     searchParams: {
       feed: 'longpoll',
@@ -283,11 +265,7 @@ async function get_new_interaction_updates(since=0) {
   return doc;
 }
 
-// interaction status progression: incomplete -> new -> waiting -> done
 
-async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 (async () => {
   // const res = await put_token({ generated: (new Date()).toISOString() });
