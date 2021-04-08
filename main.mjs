@@ -31,25 +31,25 @@ function random_svg() {
 // token { _id, generated, keywords, svg, original_png }
 // interaction { _id, color, completed?, queue_position, token }
 
-async function put_token(token) {
-  const res = await got.post(`${DB.URL}/tokens`, {
+async function request(method='GET', path="", options={}) {
+  options = Object.assign({
+    method,
     username: DB.USER,
     password: DB.PASS,
-    responseType: 'json',
-    json: token,
-  });
+    responseType: 'json'
+  }, options);
+  return got(DB.URL + path, options);
+}
+
+async function put_token(token) {
+  const res = await request('post', '/tokens', {json: token});
   return res.body; // { ok: true, id: '', rev: '' }
 }
 
 async function get_single_token(id) {
-  const res = await got.get(`${DB.URL}/tokens/${id}`, {
-    username: DB.USER,
-    password: DB.PASS,
-    responseType: 'json',
-  });
+  const res = await request('get', `/tokens/${id}`);
   return res.body; // { _id: '', _rev: '', token data }
 }
-
 
 async function get_tokens_offset(offset=0, count=2, newest_first=true) {
   if (offset < 0) offset = -1;
@@ -64,12 +64,7 @@ async function get_tokens_offset(offset=0, count=2, newest_first=true) {
     searchParams.descending = !searchParams.descending;
   }
   
-  const res = await got.get(`${DB.URL}/tokens/_all_docs`, {
-    username: DB.USER,
-    password: DB.PASS,
-    responseType: 'json',
-    searchParams,
-  });
+  const res = request('get', '/tokens/_all_docs', {searchParams});
   
   const body = res.body;
   body.rows = body.rows.map(row => row.doc);
@@ -108,12 +103,7 @@ async function get_tokens_from_id(start_id, count=2, newest_first=true) {
     'start_key': `"${start_id}"`
   };
   
-  const res = await got.get(`${DB.URL}/tokens/_all_docs`, {
-    username: DB.USER,
-    password: DB.PASS,
-    responseType: 'json',
-    searchParams
-  });
+  const res = await request('get', '/tokens/_all_docs', {searchParams});
   
   const body = res.body;
   body.rows = body.rows.map(row => row.doc);
@@ -130,12 +120,7 @@ async function get_tokens_from_id(start_id, count=2, newest_first=true) {
   if (body.offset > 0) {
     searchParams.limit = 2;
     searchParams.descending = !searchParams.descending;
-    const res_prev = await got.get(`${DB.URL}/tokens/_all_docs`, {
-      username: DB.USER,
-      password: DB.PASS,
-      responseType: 'json',
-      searchParams
-    });
+    const res_prev = await request('get', '/tokens/_all_docs', {searchParams});
     res_prev.body.rows = res_prev.body.rows.map(row => row.doc);
     body.prev = res_prev.body.rows[1];
   } else {
@@ -153,12 +138,7 @@ async function get_tokens_until_id(end_id, count=2, newest_first=true) {
     'start_key': `"${end_id}"`
   };
   
-  const res = await got.get(`${DB.URL}/tokens/_all_docs`, {
-    username: DB.USER,
-    password: DB.PASS,
-    responseType: 'json',
-    searchParams
-  });
+  const res = await request('get', '/tokens/_all_docs', {searchParams});
   
   const body = res.body;
   body.rows = body.rows.map(row => row.doc);
@@ -176,12 +156,7 @@ async function get_tokens_until_id(end_id, count=2, newest_first=true) {
   if (body.offset > 0) {
     searchParams.limit = 2;
     searchParams.descending = !searchParams.descending;
-    const res_next = await got.get(`${DB.URL}/tokens/_all_docs`, {
-      username: DB.USER,
-      password: DB.PASS,
-      responseType: 'json',
-      searchParams
-    });
+    const res_next = await request('get', '/tokens/_all_docs', {searchParams});
     res_next.body.rows = res_next.body.rows.map(row => row.doc);
     body.next = res_next.body.rows[1];
   } else {
@@ -209,13 +184,8 @@ async function get_tokens(offset=0, start_id=null, end_id=null, count=2, newest_
 }
 
 async function get_uuids(n=1) {
-  const res = await got.get(`${DB.URL}/_uuids`, {
-    username: DB.USER,
-    password: DB.PASS,
-    responseType: 'json',
-    searchParams: {
-      'count': n,
-    },
+  const res = await request('get', '/_uuids', {
+    searchParams: { 'count': n }
   });
   return res.body;
 }
