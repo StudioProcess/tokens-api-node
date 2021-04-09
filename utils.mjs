@@ -1,4 +1,5 @@
 import { inspect as _inspect } from 'util';
+import crypto from 'crypto';
 
 /**
  * Printable strings from object
@@ -28,6 +29,15 @@ export function rnd(a, b) {
 }
 
 /**
+ * Random SHA256 hash
+ */
+export function rnd_hash(len = 64) {
+  const buffer = crypto.randomBytes(32);
+  return crypto.createHash('sha256').update(buffer).digest('hex').substring(0, len);
+}
+
+
+/**
  * Create random SVG
  * Consists of a single circle and two lines.
  */
@@ -44,4 +54,12 @@ export function random_svg() {
  */
 export async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * ISO timestamp
+ * e.g. "2021-04-09T15:26:14.054Z"
+ */
+export function timestamp() {
+  return (new Date()).toISOString();
 }

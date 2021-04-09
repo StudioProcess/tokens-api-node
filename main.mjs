@@ -46,17 +46,43 @@ export async function create_filters(db_name) {
   return res.body;
 }
 
+export async function get_uuids(n=1) {
+  const res = await request('get', '/_uuids', {
+    searchParams: { 'count': n }
+  });
+  return res.body;
+}
+
+
+// Returns: { id: '' }
 export async function put_token(token) {
   const res = await request('post', `/${DB.tokens_db}`, {json: token});
-  return res.body; // { ok: true, id: '', rev: '' }
+  // res.body: { ok: true, id: '', rev: '' }
+  return { id: res.body.id };
 }
 
+// Returns: ''
+export async function delete_token(id) {
+  const res = await request('get', `/${DB.tokens_db}/${id}`);
+  const res1 = await request('delete', `/${DB.tokens_db}/${id}`, {
+    searchParams: { rev: res.body._rev }
+  });
+  // res1.body: { ok: true }
+  return '';
+}
+
+// Returns: { id, generated, svg }
 export async function get_single_token(id) {
   const res = await request('get', `/${DB.tokens_db}/${id}`);
-  return res.body; // { _id: '', _rev: '', token data }
+  // res.body: { _id: '', _rev: '', token data ... }
+  return {
+    id: res.body._id,
+    svg: res.body.svg,
+    generated: res.body.generated
+  };
 }
 
-export async function get_tokens_offset(offset=0, count=2, newest_first=true) {
+async function get_tokens_offset(offset=0, count=2, newest_first=true) {
   if (offset < 0) offset = -1;
   
   const searchParams = {
@@ -69,10 +95,15 @@ export async function get_tokens_offset(offset=0, count=2, newest_first=true) {
     searchParams.descending = !searchParams.descending;
   }
   
-  const res = request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
+  const res = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
   
   const body = res.body;
-  body.rows = body.rows.map(row => row.doc);
+  body.rows = body.rows.map(row => {
+    row.doc.id = row.doc._id;
+    delete row.doc._id;
+    delete row.doc._rev;
+    return row.doc;
+  });
   body.offset = offset;
   body.newest_first = newest_first;
   
@@ -83,14 +114,14 @@ export async function get_tokens_offset(offset=0, count=2, newest_first=true) {
   
   if (offset > 0 || offset == -1) {
     const first = body.rows.shift();
-    body.prev = first;
+    body.prev = first.id;
   } else {
     body.prev = null;
   }
   
   if (body.rows.length > count) {
     const last = body.rows.pop()
-    body.next = last;
+    body.next = last.id;
   } else {
     body.next = null;
   }
@@ -100,7 +131,7 @@ export async function get_tokens_offset(offset=0, count=2, newest_first=true) {
   // TODO: throw error when offset >= total_rows
 }
 
-export async function get_tokens_from_id(start_id, count=2, newest_first=true) {
+async function get_tokens_from_id(start_id, count=2, newest_first=true) {
   const searchParams = {
     'include_docs': true,
     'limit': count + 1,
@@ -111,12 +142,17 @@ export async function get_tokens_from_id(start_id, count=2, newest_first=true) {
   const res = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
   
   const body = res.body;
-  body.rows = body.rows.map(row => row.doc);
+  body.rows = body.rows.map(row => {
+    row.doc.id = row.doc._id;
+    delete row.doc._id;
+    delete row.doc._rev;
+    return row.doc;
+  });
   body.newest_first = newest_first;
   
   if (body.rows.length > count) {
     const last = body.rows.pop()
-    body.next = last;
+    body.next = last.id;
   } else {
     body.next = null;
   }
@@ -127,7 +163,7 @@ export async function get_tokens_from_id(start_id, count=2, newest_first=true) {
     searchParams.descending = !searchParams.descending;
     const res_prev = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
     res_prev.body.rows = res_prev.body.rows.map(row => row.doc);
-    body.prev = res_prev.body.rows[1];
+    body.prev = res_prev.body.rows[1]._id;
   } else {
     body.prev = null;
   }
@@ -135,7 +171,7 @@ export async function get_tokens_from_id(start_id, count=2, newest_first=true) {
   return body;
 }
 
-export async function get_tokens_until_id(end_id, count=2, newest_first=true) {
+async function get_tokens_until_id(end_id, count=2, newest_first=true) {
   const searchParams = {
     'include_docs': true,
     'limit': count + 1,
@@ -146,13 +182,18 @@ export async function get_tokens_until_id(end_id, count=2, newest_first=true) {
   const res = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
   
   const body = res.body;
-  body.rows = body.rows.map(row => row.doc);
+  body.rows = body.rows.map(row => {
+    row.doc.id = row.doc._id;
+    delete row.doc._id;
+    delete row.doc._rev;
+    return row.doc;
+  });
   body.newest_first = newest_first;
   body.rows.reverse();
   
   if (body.rows.length > count) {
     const first = body.rows.shift();
-    body.prev = first;
+    body.prev = first.id;
   } else {
     body.prev = null;
   }
@@ -163,7 +204,7 @@ export async function get_tokens_until_id(end_id, count=2, newest_first=true) {
     searchParams.descending = !searchParams.descending;
     const res_next = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
     res_next.body.rows = res_next.body.rows.map(row => row.doc);
-    body.next = res_next.body.rows[1];
+    body.next = res_next.body.rows[1]._id;
   } else {
     body.next = null;
   }
@@ -172,6 +213,7 @@ export async function get_tokens_until_id(end_id, count=2, newest_first=true) {
   return body;
 }
 
+// Returns: { total_rows, offset, rows: [ {id, ..}, ..], newest_first, prev, next }
 export async function get_tokens(offset=0, start_id=null, end_id=null, count=2, newest_first=true) {
   if (offset != null) {
     return get_tokens_offset(offset, count, newest_first);
@@ -188,12 +230,7 @@ export async function get_tokens(offset=0, start_id=null, end_id=null, count=2, 
   // TODO: error now
 }
 
-async function get_uuids(n=1) {
-  const res = await request('get', '/_uuids', {
-    searchParams: { 'count': n }
-  });
-  return res.body;
-}
+
 
 let color = -1;
 
@@ -266,73 +303,73 @@ export async function get_new_interaction_updates(since=0) {
 }
 
 
-
-(async () => {
-  // const res = await put_token({ generated: (new Date()).toISOString() });
-  // console.log(res);
-  
-  // const res = await get_single_token('4fbef087b199fd3ebf23aa1634000fc1');
-  // console.log(res);
-  
-  // const res = await get_uuids(1000);
-  // console.log(res);
-  
-  // console.log(await get_tokens(0));
-  // 
-  // console.log(await get_tokens(-1));
-  // 
-  
-  // console.log(await get_tokens(null, '05bf606cac86195d60776b6ae4ecd4c0'));
-  // console.log(await get_tokens(null, null, '05bf606cc076a69b1acc269db2f6156c'));
-  
-  // console.log(await get_tokens_offset(0, 2, true));
-  
-  // console.log(await get_tokens_from_id('05bf606c35e36224244b8f76279a4190', 2, false));
-  // console.log(await get_tokens_from_id('05bf606c45c080b7fc6803e838a54d22', 2, false));
-  // console.log(await get_tokens_from_id('05bf606cac86195d60776b6ae4ecd4c0', 2, false));
-  // console.log(await get_tokens_from_id('05bf606cc076a69b1acc269db2f6156c', 2, true));
-  
-  // console.log(await get_tokens_until_id('05bf606c9df9dff9ac8432eafc104644', 2, false)); // 7
-  // console.log(await get_tokens_until_id('05bf606cc076a69b1acc269db2f6156c', 2, false)); // 9
-  
-  // console.log(await get_tokens_until_id('05bf606c45c080b7fc6803e838a54d22', 2, true)); // 1
-  // console.log(await get_tokens_until_id('05bf606c35e36224244b8f76279a4190', 2, true)); // 0
-  
-  
-  // server
-  (async () => {
-    const res = await get_new_interaction_updates();
-    console.log('new interaction:', inspect(res));
-    
-    await sleep(1000);
-    let res2 = await update_interaction(res._id, 2);
-    console.log(res2);
-    
-    await sleep(1000);
-    let res3 = await update_interaction(res._id, 1);
-    console.log(res3);
-    
-    await sleep(1000);
-    let res4 = await update_interaction(res._id, null, 'newly generated token id');
-    console.log(res4);
-  })();
-  
-  
-  let res = await request_interaction();
-  console.log(res);
-  
-  await sleep(1000);
-  let res2 = await deposit_interaction(res.id, ['storm', 'earth', 'connection']);
-  console.log(res2);
-
-  let seq = 0;
-  
-  (async function get_next_update() {
-    const body = await get_single_interaction_updates(res.id, seq);
-    console.log('interaction update:', inspect(body));
-    seq = body.seq;
-    if (body.status != 'done') get_next_update();
-  })();
-  
-})();
+// 
+// (async () => {
+//   // const res = await put_token({ generated: (new Date()).toISOString() });
+//   // console.log(res);
+// 
+//   // const res = await get_single_token('4fbef087b199fd3ebf23aa1634000fc1');
+//   // console.log(res);
+// 
+//   // const res = await get_uuids(1000);
+//   // console.log(res);
+// 
+//   // console.log(await get_tokens(0));
+//   // 
+//   // console.log(await get_tokens(-1));
+//   // 
+// 
+//   // console.log(await get_tokens(null, '05bf606cac86195d60776b6ae4ecd4c0'));
+//   // console.log(await get_tokens(null, null, '05bf606cc076a69b1acc269db2f6156c'));
+// 
+//   // console.log(await get_tokens_offset(0, 2, true));
+// 
+//   // console.log(await get_tokens_from_id('05bf606c35e36224244b8f76279a4190', 2, false));
+//   // console.log(await get_tokens_from_id('05bf606c45c080b7fc6803e838a54d22', 2, false));
+//   // console.log(await get_tokens_from_id('05bf606cac86195d60776b6ae4ecd4c0', 2, false));
+//   // console.log(await get_tokens_from_id('05bf606cc076a69b1acc269db2f6156c', 2, true));
+// 
+//   // console.log(await get_tokens_until_id('05bf606c9df9dff9ac8432eafc104644', 2, false)); // 7
+//   // console.log(await get_tokens_until_id('05bf606cc076a69b1acc269db2f6156c', 2, false)); // 9
+// 
+//   // console.log(await get_tokens_until_id('05bf606c45c080b7fc6803e838a54d22', 2, true)); // 1
+//   // console.log(await get_tokens_until_id('05bf606c35e36224244b8f76279a4190', 2, true)); // 0
+// 
+// 
+//   // server
+//   (async () => {
+//     const res = await get_new_interaction_updates();
+//     console.log('new interaction:', inspect(res));
+// 
+//     await sleep(1000);
+//     let res2 = await update_interaction(res._id, 2);
+//     console.log(res2);
+// 
+//     await sleep(1000);
+//     let res3 = await update_interaction(res._id, 1);
+//     console.log(res3);
+// 
+//     await sleep(1000);
+//     let res4 = await update_interaction(res._id, null, 'newly generated token id');
+//     console.log(res4);
+//   })();
+// 
+// 
+//   let res = await request_interaction();
+//   console.log(res);
+// 
+//   await sleep(1000);
+//   let res2 = await deposit_interaction(res.id, ['storm', 'earth', 'connection']);
+//   console.log(res2);
+// 
+//   let seq = 0;
+// 
+//   (async function get_next_update() {
+//     const body = await get_single_interaction_updates(res.id, seq);
+//     console.log('interaction update:', inspect(body));
+//     seq = body.seq;
+//     if (body.status != 'done') get_next_update();
+//   })();
+// 
+// })();
 
