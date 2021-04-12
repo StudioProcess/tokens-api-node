@@ -17,12 +17,14 @@ let color_idx = 0;
 */
 
 export async function request(method='get', path='', options={}) {
+  let config_options = {};
+  if (DB.request_options) config_options = DB.request_options;
   options = Object.assign({
     method,
     username: DB.user,
     password: DB.pass,
     responseType: 'json'
-  }, options);
+  }, config_options, options);
   return got(DB.url + path, options);
 }
 

@@ -86,6 +86,8 @@ export function log_req(req) {
 /**
  * Log main properties of response object to console
  */
-// export function log_res() {
-//   // TODO
-// }
+export function log_res(res) {
+  return console.log(pick(res, [
+    'statusCode', 'statusMessage', 'method', 'url', 'headers', 'body'
+  ]));
+}

@@ -38,16 +38,43 @@ function parse_query(req, res, next) {
   next();
 }
 
+function db_error(res, e) {
+  if (e.code == 'ECONNREFUSED') {
+    // 503 service unavailable
+    res.status(503).json({error: 'db down'}); 
+    return;
+  }
+  res.status(500).json({
+    // 500 internal server error
+    error: 'db error', 
+    code: e.code, 
+    db_response: {
+      statusCode: e.response?.statusCode,
+      statusMessage: e.response?.statusMessage
+    }
+  });
+}
+
 app.all('*', parse_query);
 
 
 app.get('/get_token', async (req, res) => {
+  // no id (null, undefined, '')
+  if (!req.query.id) {
+    res.status(400).json({error: 'id missing'});
+    return;
+  }
+  
   try {
     const token = await db.get_single_token(req.query.id);
     res.json(token);
   } catch (e) {
-    // console.log(e);
-    res.status(400).json(e);
+    // 404 object not found
+    if (e.response?.statusCode == 404) {
+      res.status(404).json({error: 'token not found'}) ;
+      return;
+    }
+    db_error(res, e);
   }
 });
 
@@ -63,7 +90,6 @@ app.get('/get_tokens', async (req, res) => {
     );
     res.json(tokens);
   } catch (e) {
-    // console.log(e);
     res.status(400).json(e);
   }
 });
