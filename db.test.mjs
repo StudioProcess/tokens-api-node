@@ -5,6 +5,7 @@ import * as util from './util.mjs';
 
 const tokens = [];
 const match_id = /[0-9a-f]{32}/; // 32 hex digits
+const match_color = /#[0-9a-f]{6}/; // hex color
 
 // setup mock databases
 tap.before(async () => {
@@ -195,7 +196,7 @@ tap.test('interaction process', async t => {
   const res = await db.request_interaction();
   id = res.id;
   color = res.color;
-  t.match(res, {id: match_id, color:0 }, 'got interaction id and color');
+  t.match(res, {id: match_id, color: match_color }, 'got interaction id and color');
   
   const res1 = await db.deposit_interaction(res.id, keywords);
   t.equal(res1, '', 'sucessfully deposited interaction');

@@ -2,6 +2,10 @@ import { readFileSync } from 'fs';
 import got from 'got';
 
 export const DB = JSON.parse(readFileSync('./db.config.json'));
+export const COLORS = JSON.parse(readFileSync('./colors.config.json'));
+
+const colors = Object.values(COLORS);
+let color_idx = 0;
 
 /* 
   databases:
@@ -231,22 +235,21 @@ export async function get_tokens(offset=0, start_id=null, end_id=null, count=2, 
 
 
 
-let color = -1;
-
 // Returns: { id, color }
 export async function request_interaction() {
-  color = (color + 1) % 10;
-  const next_color = color;
+  color_idx = (color_idx++) % colors.length
+  const color = colors[color_idx];
+  
   const res = await request('post', `/${DB.interactions_db}`, {
     json: { 
       'status': 'incomplete',
-      'color': next_color,
+      'color': color,
     }
   });
-  res.body.color = next_color;
+
   return {
     id: res.body.id,
-    color: res.body.color,
+    color,
   };
 }
 
