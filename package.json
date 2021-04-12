@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "description": "",
   "private": true,
+  "main": "main.mjs",
+  "type": "module",
   "scripts": {
     "start": "node main.mjs",
     "test": "tap",
-    "test-dev": "node main.test.mjs"
+    "test-dev": "node db.test.mjs"
   },
   "keywords": [],
   "author": "Martin Grödl <martin@process.studio> (https://process.studio)",
