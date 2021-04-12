@@ -7,8 +7,7 @@
   "type": "module",
   "scripts": {
     "start": "node main.mjs",
-    "test": "tap",
-    "test-dev": "node db.test.mjs"
+    "test": "tap"
   },
   "keywords": [],
   "author": "Martin Grödl <martin@process.studio> (https://process.studio)",

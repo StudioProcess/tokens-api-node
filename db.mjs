@@ -217,7 +217,7 @@ async function get_tokens_until_id(end_id, count=2, newest_first=true) {
 }
 
 // Returns: { total_rows, offset, rows: [ {id, ..}, ..], newest_first, prev, next }
-export async function get_tokens(offset=0, start_id=null, end_id=null, count=2, newest_first=true) {
+export async function get_tokens(offset=null, start_id=null, end_id=null, count=1, newest_first=true) {
   if (offset != null) {
     return get_tokens_offset(offset, count, newest_first);
   }

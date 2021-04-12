@@ -63,3 +63,29 @@ export async function sleep(ms) {
 export function timestamp() {
   return (new Date()).toISOString();
 }
+
+
+/**
+ * Pick properties from an object
+ */
+export function pick(obj, props) {
+  const out = {};
+  for (let prop of props) out[prop] = obj[prop];
+  return out;
+}
+
+/**
+ * Log main properties of request object to console
+ */
+export function log_req(req) {
+  return console.log(pick(req, [
+    'method', 'url', 'headers', 'query' 
+  ]));
+}
+
+/**
+ * Log main properties of response object to console
+ */
+// export function log_res() {
+//   // TODO
+// }
