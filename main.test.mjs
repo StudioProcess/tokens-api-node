@@ -5,6 +5,7 @@ import * as util from './utils.mjs';
 
 
 const tokens = [];
+const match_id = /[0-9a-f]{32}/; // 32 hex digits
 
 // setup mock databases
 tap.before(async () => {
@@ -54,7 +55,7 @@ tap.test('put token', async t => {
     generated: util.timestamp(),
   };
   const res = await main.put_token(token);
-  t.match(res, { id: /.*/ }, 'result is valid');
+  t.match(res, { id: match_id }, 'result is valid');
   
   const res1 = await main.get_single_token(res.id);
   t.same(res1, { id: res.id, svg: token.svg, generated: token.generated }, 'get successful');
@@ -154,7 +155,7 @@ tap.test('get tokens until end id', async t => {
   });
   // page before
   res = await main.get_tokens(null, null, res.prev, 3, true);
-  console.log(res);
+  // console.log(res);
   t.same(res.rows[0], tokens[4]);
   t.same(res.rows[1], tokens[5]);
   t.same(res.rows[2], tokens[6]);
@@ -166,3 +167,45 @@ tap.test('get tokens until end id', async t => {
     next: tokens[7].id,
   });
 });
+
+
+tap.test('interaction process', async t => {
+  let id = '';
+  const keywords = ['careful', 'truth', 'march'];
+  let color;
+  let token_id = '';
+  
+  t.test(async t => {
+    const res = await main.get_new_interaction_updates();
+    t.equal(res.id, id, 'received new interaction update');
+    t.same(res.keywords, keywords, 'with correct keywords');
+    t.same(res.color, color, 'and correct color');
+    
+    await util.sleep(100);
+    const res2 = await main.update_interaction(res.id, 2);
+    t.equal(res2, '', 'successful queue update (2)');
+    await util.sleep(100);
+    const res3 = await main.update_interaction(res.id, 1);
+    t.equal(res3, '', 'successful queue update (1)');
+    await util.sleep(100);
+    token_id = util.rnd_hash(32);
+    const res4 = await main.update_interaction(res.id, null, token_id);
+    t.equal(res4, '', 'successful token update');
+  });
+  
+  const res = await main.request_interaction();
+  id = res.id;
+  color = res.color;
+  t.match(res, {id: match_id, color:0 }, 'got interaction id and color');
+  
+  const res1 = await main.deposit_interaction(res.id, keywords);
+  t.equal(res1, '', 'sucessfully deposited interaction');
+  
+  const res2 = await main.get_single_interaction_updates(id);
+  t.has(res2, {id, queue_position:2, token_id:null}, 'received queue update (2)');
+  const res3 = await main.get_single_interaction_updates(res2.id, res2.seq);
+  t.has(res3, {id, queue_position:1, token_id:null}, 'received queue update (1)');
+  const res4 = await main.get_single_interaction_updates(res3.id, res3.seq);
+  t.has(res4, {id, queue_position:0, token_id}, 'received token update');
+});
+
