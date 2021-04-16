@@ -2,63 +2,24 @@ import tap from 'tap';
 import got from 'got';
 import * as db from './db.mjs';
 import * as util from './util.mjs';
+import * as test_util from './test_util.mjs';
 
-const tokens = [];
-const match_id = /[0-9a-f]{32}/; // 32 hex digits
-const match_color = /#[0-9a-f]{6}/ // hex color
+let tokens;
 
-let server;
-
-// setup mock databases
 tap.before(async () => {
-  console.log('running before:');
-  const rnd_id = util.rnd_hash(7);
-  db.DB.tokens_db += '-' + rnd_id;
-  db.DB.interactions_db += '-' + rnd_id;
-  
-  console.log('creating db ' + db.DB.tokens_db);
-  await db.create_db(db.DB.tokens_db);
-  
-  console.log('creating db ' + db.DB.interactions_db);
-  await db.create_db(db.DB.interactions_db);
-  await util.sleep(500); // will fail if putting immediately
-  
-  console.log('creating filters');
-  await db.create_filters();
-  
-  // create a bunch of token docs
-  console.log('creating tokens');
-  for (let i=0; i<10; i++) {
-    const token = {
-      svg: util.random_svg(),
-      generated: util.timestamp(),
-    };
-    const res = await db.put_token(token);
-    token.id = res.id;
-    tokens.push(token);
-  }
-  tokens.reverse();
-  
+  // setup mock databases
+  tokens = await test_util.setup_mock_db();
   // make requests fail faster
   db.DB.request_options = {
     retry: 0
   };
-  
-  // 
-  console.log('starting server');
-  const main = await import('./main.mjs');
-  server = main.default;
+  // start server
+  await test_util.start_server();
 });
 
 tap.teardown(async () => {
-  console.log('running teardown:');
-  console.log('deleting db ' + db.DB.tokens_db);
-  await db.delete_db(db.DB.tokens_db);
-  console.log('deleting db ' + db.DB.interactions_db);
-  await db.delete_db(db.DB.interactions_db);
-  
-  console.log('stopping server');
-  server.close();
+  test_util.teardown_mock_db();
+  test_util.stop_server();
 });
 
 
@@ -241,14 +202,14 @@ tap.test('interaction colors', async t => {
     res = await got('http://localhost:3000/request_interaction', {
       responseType: 'json',
     });
-    t.match(res.body.id, match_id, 'got id');
+    t.match(res.body.id, test_util.match_id, 'got id');
     t.same(res.body.color, db.colors[i], 'got correct color');
   }
   
   res = await got('http://localhost:3000/request_interaction', {
     responseType: 'json',
   });
-  t.match(res.body.id, match_id, 'got id');
+  t.match(res.body.id, test_util.match_id, 'got id');
   t.same(res.body.color, db.colors[0], 'got first color again');
 });
 
@@ -258,7 +219,7 @@ tap.test('interaction sequence', async t => {
   let res = await got('http://localhost:3000/request_interaction', {
     responseType: 'json',
   });
-  t.match(res.body, { id: match_id, color: match_color });
+  t.match(res.body, { id: test_util.match_id, color: test_util.match_color });
   
   const new_token_id = util.rnd_hash(32);
   
