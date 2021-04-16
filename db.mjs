@@ -4,8 +4,8 @@ import got from 'got';
 export const DB = JSON.parse(readFileSync('./db.config.json'));
 export const COLORS = JSON.parse(readFileSync('./colors.config.json'));
 
-const colors = Object.values(COLORS);
-let color_idx = 0;
+export const colors = Object.values(COLORS);
+export let color_idx = 0;
 
 /* 
   databases:
@@ -239,8 +239,8 @@ export async function get_tokens(offset=null, start_id=null, end_id=null, count=
 
 // Returns: { id, color }
 export async function request_interaction() {
-  color_idx = (color_idx++) % colors.length
   const color = colors[color_idx];
+  color_idx = (color_idx + 1) % colors.length;
   
   const res = await request('post', `/${DB.interactions_db}`, {
     json: { 

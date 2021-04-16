@@ -90,7 +90,7 @@ app.get('/get_tokens', async (req, res) => {
     );
     res.json(tokens);
   } catch (e) {
-    res.status(400).json(e);
+    db_error(res, e);
   }
 });
 
@@ -100,6 +100,55 @@ app.get('/get_tokens', async (req, res) => {
 // 
 // app.get('/delete_token', async (req, res) => {
 // });
+
+
+app.get('/request_interaction', async (req, res) => {
+  try {
+    const int = await db.request_interaction();
+    res.json(int);
+  } catch (e) {
+    db_error(res, e);
+  }
+});
+
+app.get('/deposit_interaction', async (req, res) => {
+  try {
+    let keywords = req.query.keywords;
+    keywords = kewords.toLowerCase();
+    keywords = str.split(/[\.,;/]/, 3);
+    await db.deposit_interaction(req.query.id, keywords);
+    res.end();
+  } catch (e) {
+    db_error(res, e);
+  }
+});
+
+app.get('/get_single_interaction_updates', async (req, res) => {
+  try {
+    const int = await db.get_single_interaction_updates(req.query.id, req.query.since);
+    res.json(int);
+  } catch (e) {
+    db_error(res, e);
+  }
+});
+
+app.get('/get_new_interaction_updates', async (req, res) => {
+  try {
+    const int = await db.get_new_interaction_updates(req.query.since);
+    res.json(int);
+  } catch (e) {
+    db_error(res, e);
+  }
+});
+
+app.get('/update_interaction', async (req, res) => {
+  try {
+    const int = await db.update_interaction(req.query.id, req.query.queue_position, req.query.token_id);
+    res.end();
+  } catch (e) {
+    db_error(res, e);
+  }
+});
 
 
 const server = app.listen(CONFIG.port, () => {
