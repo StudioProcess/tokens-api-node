@@ -5,7 +5,8 @@ import * as util from './util.mjs';
 
 const tokens = [];
 const match_id = /[0-9a-f]{32}/; // 32 hex digits
-let server_proc;
+const match_color = /#[0-9a-f]{6}/ // hex color
+
 let server;
 
 // setup mock databases
@@ -61,7 +62,7 @@ tap.teardown(async () => {
 });
 
 
-tap.skip('get token', async t => {
+tap.test('get token', async t => {
   let res = await got('http://localhost:3000/get_token', {
     responseType: 'json',
     searchParams: { id: tokens[0].id }
@@ -69,7 +70,7 @@ tap.skip('get token', async t => {
   t.same(res.body, tokens[0]);
 });
 
-tap.skip('get token (errors)', async t => {
+tap.test('get token (errors)', async t => {
   // db down
   const url_save = db.DB.url;
   db.DB.url = 'http://localhost:9999';
@@ -131,7 +132,7 @@ tap.skip('get token (errors)', async t => {
   }
 });
 
-tap.skip('get tokens (offset)', async t => {
+tap.test('get tokens (offset)', async t => {
   let res = await got('http://localhost:3000/get_tokens', {
     responseType: 'json',
     searchParams: { offset:0, count:1 }
@@ -167,7 +168,7 @@ tap.skip('get tokens (offset)', async t => {
   t.same(res.body.newest_first, true);
 });
 
-tap.skip('get tokens (from id)', async t => {
+tap.test('get tokens (from id)', async t => {
   let res = await got('http://localhost:3000/get_tokens', {
     responseType: 'json',
     searchParams: { start_id:tokens[0].id, count:1 }
@@ -205,7 +206,7 @@ tap.skip('get tokens (from id)', async t => {
   t.same(res.body.newest_first, true);
 });
 
-tap.skip('get tokens (until id)', async t => {
+tap.test('get tokens (until id)', async t => {
   let res = await got('http://localhost:3000/get_tokens', {
     responseType: 'json',
     searchParams: { end_id:tokens[tokens.length-1].id, count:3 }
@@ -233,7 +234,7 @@ tap.skip('get tokens (until id)', async t => {
 });
 
 
-tap.test('interaction', async t => {
+tap.test('interaction colors', async t => {
   let res;
   // cycle through all colors
   for (let i=0; i < db.colors.length; i++) {
@@ -250,3 +251,100 @@ tap.test('interaction', async t => {
   t.match(res.body.id, match_id, 'got id');
   t.same(res.body.color, db.colors[0], 'got first color again');
 });
+
+
+tap.test('interaction sequence', async t => {
+  // request interaction
+  let res = await got('http://localhost:3000/request_interaction', {
+    responseType: 'json',
+  });
+  t.match(res.body.id, match_id, 'got id');
+  t.match(res.body.color, match_color, 'got color');
+  
+  const new_token_id = util.rnd_hash(32);
+  
+  // server
+  t.test(async t => {
+    let res2 = await got('http://localhost:3000/get_new_interaction_updates', {
+      responseType: 'json',
+    });
+    t.match(res2.body, res.body);
+    t.same(res2.body.keywords, ['a', 'b', 'c']);
+    
+    // update queue
+    await util.sleep(100);
+    let res3 = await got('http://localhost:3000/update_interaction', {
+      responseType: 'json',
+      searchParams: { id: res2.body.id, queue_position: 3 }
+    });
+    t.same(res3.statusCode, 200, 'update queue (3)');
+    t.same(res3.body, '');
+    
+    await util.sleep(100);
+    res3 = await got('http://localhost:3000/update_interaction', {
+      responseType: 'json',
+      searchParams: { id: res2.body.id, queue_position: 2 }
+    });
+    t.same(res3.statusCode, 200, 'update queue (2)');
+    t.same(res3.body, '');
+    
+    await util.sleep(100);
+    res3 = await got('http://localhost:3000/update_interaction', {
+      responseType: 'json',
+      searchParams: { id: res2.body.id, queue_position: 1 }
+    });
+    t.same(res3.statusCode, 200, 'update queue (1)');
+    t.same(res3.body, '');
+    
+    await util.sleep(100);
+    res3 = await got('http://localhost:3000/update_interaction', {
+      responseType: 'json',
+      searchParams: { id: res2.body.id, token_id: new_token_id }
+    });
+    t.same(res3.statusCode, 200, 'update token generated');
+    t.same(res3.body, '');
+  });
+  
+  // complete interaction
+  let res4 = await got('http://localhost:3000/deposit_interaction', {
+    responseType: 'json',
+    searchParams: { id: res.body.id, keywords: 'a,b,c' }
+  });
+  t.same(res4.statusCode, 200, 'deposit interaction');
+  t.same(res4.body, '', 'no response data');
+  
+  // receive queue updates
+  let res5 = await got('http://localhost:3000/get_single_interaction_updates', {
+    responseType: 'json',
+    searchParams: { id: res.body.id }
+  });
+  t.same(res5.body.id, res.body.id);
+  t.same(res5.body.queue_position, 3);
+  t.same(res5.body.token_id, null);
+  
+  res5 = await got('http://localhost:3000/get_single_interaction_updates', {
+    responseType: 'json',
+    searchParams: { id: res.body.id, since: res5.body.seq }
+  });
+  t.same(res5.body.id, res.body.id);
+  t.same(res5.body.queue_position, 2);
+  t.same(res5.body.token_id, null);
+  
+  res5 = await got('http://localhost:3000/get_single_interaction_updates', {
+    responseType: 'json',
+    searchParams: { id: res.body.id, since: res5.body.seq }
+  });
+  t.same(res5.body.id, res.body.id);
+  t.same(res5.body.queue_position, 1);
+  t.same(res5.body.token_id, null);
+  
+  res5 = await got('http://localhost:3000/get_single_interaction_updates', {
+    responseType: 'json',
+    searchParams: { id: res.body.id, since: res5.body.seq }
+  });
+  t.same(res5.body.id, res.body.id);
+  t.same(res5.body.queue_position, 0);
+  t.same(res5.body.token_id, new_token_id);
+});
+
+

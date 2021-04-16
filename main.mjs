@@ -114,11 +114,12 @@ app.get('/request_interaction', async (req, res) => {
 app.get('/deposit_interaction', async (req, res) => {
   try {
     let keywords = req.query.keywords;
-    keywords = kewords.toLowerCase();
-    keywords = str.split(/[\.,;/]/, 3);
+    keywords = keywords.toLowerCase();
+    keywords = keywords.split(/[\.,;/]/, 3);
     await db.deposit_interaction(req.query.id, keywords);
     res.end();
   } catch (e) {
+    console.log(e);
     db_error(res, e);
   }
 });
