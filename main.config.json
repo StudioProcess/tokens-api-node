@@ -1,5 +1,6 @@
 {
   "host": "localhost",
   "port": 3000,
-  "users": {}
+  "users": {},
+  "page_limit": 1000
 }

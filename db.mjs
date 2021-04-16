@@ -76,19 +76,19 @@ export async function delete_token(id) {
   return '';
 }
 
-// Returns: { id, generated, svg }
+// Returns: { id, generated, svg , ... }
 export async function get_single_token(id) {
   const res = await request('get', `/${DB.tokens_db}/${id}`);
   // res.body: { _id: '', _rev: '', token data ... }
-  return {
-    id: res.body._id,
-    svg: res.body.svg,
-    generated: res.body.generated
-  };
+  res.body.id = res.body._id;
+  delete res.body._id;
+  delete res.body._rev;
+  return res.body;
 }
 
-async function get_tokens_offset(offset=0, count=2, newest_first=true) {
-  if (offset < 0) offset = -1;
+async function get_tokens_offset(offset=0, count=1, newest_first=true) {
+  if (offset < -1) throw {'error': 'offset out of range'};
+  // TODO: support all negative offsets
   
   const searchParams = {
     'include_docs': true,
@@ -101,6 +101,7 @@ async function get_tokens_offset(offset=0, count=2, newest_first=true) {
   }
   
   const res = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
+  // if (offset >= res.body.total_rows) throw {'error': 'offset out of range'};
   
   const body = res.body;
   body.rows = body.rows.map(row => {
@@ -117,7 +118,8 @@ async function get_tokens_offset(offset=0, count=2, newest_first=true) {
     body.offset = body.total_rows - body.rows.length + 1;
   }
   
-  if (offset > 0 || offset == -1) {
+  // if (offset > 0 || offset == -1) {
+  if ( (offset > 0 || offset == -1) && body.rows.length > 0 ) {
     const first = body.rows.shift();
     body.prev = first.id;
   } else {
@@ -125,15 +127,13 @@ async function get_tokens_offset(offset=0, count=2, newest_first=true) {
   }
   
   if (body.rows.length > count) {
-    const last = body.rows.pop()
+    const last = body.rows.pop();
     body.next = last.id;
   } else {
     body.next = null;
   }
   
   return body;
-  
-  // TODO: throw error when offset >= total_rows
 }
 
 async function get_tokens_from_id(start_id, count=2, newest_first=true) {
@@ -232,7 +232,7 @@ export async function get_tokens(offset=null, start_id=null, end_id=null, count=
     return get_tokens_until_id(end_id, count, newest_first);
   }
   
-  // TODO: error now
+  throw { error: 'need offset, start_id, or end_id' };
 }
 
 

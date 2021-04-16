@@ -36,6 +36,7 @@ export async function setup_mock_db() {
     const token = {
       svg: util.random_svg(),
       generated: util.timestamp(),
+      offset: i
     };
     const res = await db.put_token(token);
     token.id = res.id;

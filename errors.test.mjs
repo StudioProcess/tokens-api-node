@@ -84,3 +84,90 @@ tap.test('get token (errors)', async t => {
     }, 'invalid id');
   }
 });
+
+tap.test('get tokens by offset (errors)', async t => {
+  try {
+    await got('http://localhost:3000/get_tokens', {
+      responseType: 'json',
+      searchParams: {}
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'need offset, start_id or end_id'}
+    }, 'none of offset, start_id, end_id given');
+  }
+  
+  // try {
+  //   await got('http://localhost:3000/get_tokens', {
+  //     responseType: 'json',
+  //     searchParams: { offset: 10 }
+  //   });
+  //   t.fail('should throw');
+  // } catch (e) {
+  //   t.match(e.response, {
+  //     statusCode: 400,
+  //     body: {error: 'offset out of range'}
+  //   }, 'offset too big');
+  // }
+  
+  try {
+    await got('http://localhost:3000/get_tokens', {
+      responseType: 'json',
+      searchParams: { offset: -2 }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'offset out of range'}
+    }, 'offset too small');
+  }
+  
+  try {
+    await got('http://localhost:3000/get_tokens', {
+      responseType: 'json',
+      searchParams: { offset:0, count:0 }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'count out of range'}
+    }, 'count too small');
+  }
+  
+  try {
+    await got('http://localhost:3000/get_tokens', {
+      responseType: 'json',
+      searchParams: { offset:0, count:999999 }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'count out of range'}
+    }, 'count too big');
+  }
+  
+  let res = await got('http://localhost:3000/get_tokens', {
+    responseType: 'json',
+    searchParams: { offset:10, count:1 }
+  });
+  t.match(res, {
+    statusCode: 200,
+    body: { offset:10, rows: [], prev: tokens[9].id, next: null }
+  }, 'going one over');
+  
+  res = await got('http://localhost:3000/get_tokens', {
+    responseType: 'json',
+    searchParams: { offset:99, count:1 }
+  });
+  t.match(res, {
+    statusCode: 200,
+    body: { offset:99, rows: [], prev: null, next: null }
+  }, 'going over more');
+  
+});
+

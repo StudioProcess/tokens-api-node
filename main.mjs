@@ -3,7 +3,7 @@
 import {readFileSync} from 'fs';
 import express from 'express';
 import * as db from './db.mjs';
-import { log_req } from './util.mjs';
+import { log_req, pick } from './util.mjs';
 
 const CONFIG = JSON.parse(readFileSync('./main.config.json'));
 
@@ -38,21 +38,36 @@ function parse_query(req, res, next) {
   next();
 }
 
-function db_error(res, e) {
-  if (e.code == 'ECONNREFUSED') {
-    // 503 service unavailable
-    res.status(503).json({error: 'db down'}); 
+function other_error(res, e) {
+  // got.js errors. See: https://www.npmjs.com/package/got#errors
+  if (e.name == 'RequestError') {
+    if (e.code == 'ECONNREFUSED') {
+      // 503 service unavailable
+      res.status(503).json({error: 'db down'}); 
+      return;
+    }
+    res.status(500).json({ error: 'db request error', code: e.code });
     return;
   }
-  res.status(500).json({
-    // 500 internal server error
-    error: 'db error', 
-    code: e.code, 
-    db_response: {
-      statusCode: e.response?.statusCode,
-      statusMessage: e.response?.statusMessage
-    }
-  });
+  
+  if (e.name == 'HTTPError') {
+    res.status(500).json({ 
+      error: 'db http error', 
+      statusCode: e.response?.statusCode, 
+      statusMessage: e.response?.statusMessage });
+    return;
+  }
+  
+  if (['CacheError', 'ReadError', 'ParseError', 
+    'UploadError', 'MaxRedirectsError', 'UnsupportedProtocolError', 
+    'TimeoutError', 'CancelError'].includes(e.name)) {
+    res.status(500).json({ error: 'db error', name: e.name });
+    return;
+  }
+  
+  // other errors (node)
+  res.status(500).json({ error: 'other error', error_obj: pick(e, ['name', 'code', 'message', 'stack']) });
+  return;
 }
 
 app.all('*', parse_query);
@@ -74,12 +89,22 @@ app.get('/get_token', async (req, res) => {
       res.status(404).json({error: 'token not found'}) ;
       return;
     }
-    db_error(res, e);
+    other_error(res, e);
   }
 });
 
 
 app.get('/get_tokens', async (req, res) => {
+  if (req.query.offset == undefined && req.query.start_id == undefined && req.query.end_id == undefined) {
+    res.status(400).json({error: 'need offset, start_id or end_id'});
+    return;
+  }
+  
+  if (req.query.count <= 0 || req.query.count > CONFIG.page_limit) {
+    res.status(400).json({error: 'count out of range'});
+    return;
+  }
+  
   try {
     const tokens = await db.get_tokens(
       req.query.offset,
@@ -90,7 +115,11 @@ app.get('/get_tokens', async (req, res) => {
     );
     res.json(tokens);
   } catch (e) {
-    db_error(res, e);
+    if (e.error == 'offset out of range') {
+      res.status(400).json(e);
+      return;
+    }
+    other_error(res, e);
   }
 });
 
@@ -107,7 +136,7 @@ app.get('/request_interaction', async (req, res) => {
     const int = await db.request_interaction();
     res.json(int);
   } catch (e) {
-    db_error(res, e);
+    other_error(res, e);
   }
 });
 
@@ -120,7 +149,7 @@ app.get('/deposit_interaction', async (req, res) => {
     res.end();
   } catch (e) {
     console.log(e);
-    db_error(res, e);
+    other_error(res, e);
   }
 });
 
@@ -129,7 +158,7 @@ app.get('/get_single_interaction_updates', async (req, res) => {
     const int = await db.get_single_interaction_updates(req.query.id, req.query.since);
     res.json(int);
   } catch (e) {
-    db_error(res, e);
+    other_error(res, e);
   }
 });
 
@@ -138,7 +167,7 @@ app.get('/get_new_interaction_updates', async (req, res) => {
     const int = await db.get_new_interaction_updates(req.query.since);
     res.json(int);
   } catch (e) {
-    db_error(res, e);
+    other_error(res, e);
   }
 });
 
@@ -147,7 +176,7 @@ app.get('/update_interaction', async (req, res) => {
     const int = await db.update_interaction(req.query.id, req.query.queue_position, req.query.token_id);
     res.end();
   } catch (e) {
-    db_error(res, e);
+    other_error(res, e);
   }
 });
 
