@@ -258,8 +258,7 @@ tap.test('interaction sequence', async t => {
   let res = await got('http://localhost:3000/request_interaction', {
     responseType: 'json',
   });
-  t.match(res.body.id, match_id, 'got id');
-  t.match(res.body.color, match_color, 'got color');
+  t.match(res.body, { id: match_id, color: match_color });
   
   const new_token_id = util.rnd_hash(32);
   
@@ -277,32 +276,32 @@ tap.test('interaction sequence', async t => {
       responseType: 'json',
       searchParams: { id: res2.body.id, queue_position: 3 }
     });
-    t.same(res3.statusCode, 200, 'update queue (3)');
-    t.same(res3.body, '');
+    t.equal(res3.statusCode, 200, 'update queue (3)');
+    t.equal(res3.body, '');
     
     await util.sleep(100);
     res3 = await got('http://localhost:3000/update_interaction', {
       responseType: 'json',
       searchParams: { id: res2.body.id, queue_position: 2 }
     });
-    t.same(res3.statusCode, 200, 'update queue (2)');
-    t.same(res3.body, '');
+    t.equal(res3.statusCode, 200, 'update queue (2)');
+    t.equal(res3.body, '');
     
     await util.sleep(100);
     res3 = await got('http://localhost:3000/update_interaction', {
       responseType: 'json',
       searchParams: { id: res2.body.id, queue_position: 1 }
     });
-    t.same(res3.statusCode, 200, 'update queue (1)');
-    t.same(res3.body, '');
+    t.equal(res3.statusCode, 200, 'update queue (1)');
+    t.equal(res3.body, '');
     
     await util.sleep(100);
     res3 = await got('http://localhost:3000/update_interaction', {
       responseType: 'json',
       searchParams: { id: res2.body.id, token_id: new_token_id }
     });
-    t.same(res3.statusCode, 200, 'update token generated');
-    t.same(res3.body, '');
+    t.equal(res3.statusCode, 200, 'update token generated');
+    t.equal(res3.body, '');
   });
   
   // complete interaction
@@ -310,41 +309,32 @@ tap.test('interaction sequence', async t => {
     responseType: 'json',
     searchParams: { id: res.body.id, keywords: 'a,b,c' }
   });
-  t.same(res4.statusCode, 200, 'deposit interaction');
-  t.same(res4.body, '', 'no response data');
+  t.equal(res4.statusCode, 200, 'deposit interaction');
+  t.equal(res4.body, '', 'no response data');
   
   // receive queue updates
   let res5 = await got('http://localhost:3000/get_single_interaction_updates', {
     responseType: 'json',
     searchParams: { id: res.body.id }
   });
-  t.same(res5.body.id, res.body.id);
-  t.same(res5.body.queue_position, 3);
-  t.same(res5.body.token_id, null);
+  t.match(res5.body, {id: res.body.id, queue_position: 3, token_id: null});
   
   res5 = await got('http://localhost:3000/get_single_interaction_updates', {
     responseType: 'json',
     searchParams: { id: res.body.id, since: res5.body.seq }
   });
-  t.same(res5.body.id, res.body.id);
-  t.same(res5.body.queue_position, 2);
-  t.same(res5.body.token_id, null);
+  t.match(res5.body, {id: res.body.id, queue_position: 2, token_id: null});
   
   res5 = await got('http://localhost:3000/get_single_interaction_updates', {
     responseType: 'json',
     searchParams: { id: res.body.id, since: res5.body.seq }
   });
-  t.same(res5.body.id, res.body.id);
-  t.same(res5.body.queue_position, 1);
-  t.same(res5.body.token_id, null);
+  t.match(res5.body, {id: res.body.id, queue_position: 1, token_id: null});
   
   res5 = await got('http://localhost:3000/get_single_interaction_updates', {
     responseType: 'json',
     searchParams: { id: res.body.id, since: res5.body.seq }
   });
-  t.same(res5.body.id, res.body.id);
-  t.same(res5.body.queue_position, 0);
-  t.same(res5.body.token_id, new_token_id);
+  t.match(res5.body, {id: res.body.id, queue_position: 0, token_id: new_token_id});
 });
-
 
