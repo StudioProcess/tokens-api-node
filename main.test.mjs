@@ -31,67 +31,6 @@ tap.test('get token', async t => {
   t.same(res.body, tokens[0]);
 });
 
-tap.test('get token (errors)', async t => {
-  // db down
-  const url_save = db.DB.url;
-  db.DB.url = 'http://localhost:9999';
-  try {
-    await got('http://localhost:3000/get_token', {
-      responseType: 'json',
-      searchParams: { id: tokens[0].id },
-      retry: 0
-    });
-    t.fail('should throw');
-  } catch (e) {
-    t.match(e.response, {
-      statusCode: 503,
-      body: {error: 'db down'}
-    }, 'db down');
-  }
-  db.DB.url = url_save;
-  
-  // no id
-  try {
-    await got('http://localhost:3000/get_token', {
-      responseType: 'json',
-    });
-    t.fail('should throw');
-  } catch (e) {
-    t.match(e.response, {
-      statusCode: 400,
-      body: {error: 'id missing'}
-    }, 'no id');
-  }
-  
-  // empty id
-  try {
-    await got('http://localhost:3000/get_token', {
-      responseType: 'json',
-      searchParams: { id: '' }
-    });
-    t.fail('should throw');
-  } catch (e) {
-    t.match(e.response, {
-      statusCode: 400,
-      body: {error: 'id missing'}
-    }, 'empty id');
-  }
-  
-  // invalid id
-  try {
-    await got('http://localhost:3000/get_token', {
-      responseType: 'json',
-      retry: 0,
-      searchParams: { id: 'abcdef' }
-    });
-    t.fail('should throw');
-  } catch (e) {
-    t.match(e.response, {
-      statusCode: 404,
-      body: {error: 'token not found'}
-    }, 'invalid id');
-  }
-});
 
 tap.test('get tokens (offset)', async t => {
   let res = await got('http://localhost:3000/get_tokens', {
