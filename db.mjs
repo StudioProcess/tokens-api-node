@@ -7,6 +7,12 @@ export const COLORS = JSON.parse(readFileSync('./colors.config.json'));
 export const colors = Object.values(COLORS);
 export let color_idx = 0;
 
+// filters for interactions db
+const interactions_filters = {
+  "new": "function(doc, req) { return doc.status == 'new'; }",
+  "updates": "function(doc, req) { return doc._id == req.query.doc_id && (doc.status == 'waiting' || doc.status == 'done'); }"
+};
+
 /* 
   databases:
   tokens { _id, generated, keywords, svg, original_png }
@@ -28,6 +34,40 @@ export async function request(method='get', path='', options={}) {
   return got(DB.url + path, options);
 }
 
+export async function check_dbs() {
+  const promises = [ check_db(DB.tokens_db), check_db(DB.interactions_db) ];
+  const results = await Promise.all(promises);
+  return {
+    [DB.tokens_db]: results[0],
+    [DB.interactions_db]: results[1]
+  }
+}
+
+export async function check_db(name) {
+  try {
+    const res = await request('head', `/${name}`);
+    return res.statusCode == 200;
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function check_filters() {
+  try {
+    const res = await request('get', `/${DB.interactions_db}/_design/filters`);
+    const filters = res.body.filters;
+    if (!filters) return false; // filters attribute is empty
+    for (let key of Object.keys(interactions_filters)) {
+      if (filters[key] !== interactions_filters[key]) return false;
+    }
+    return true;
+  } catch (e) {
+    if (e.response.statusCode == 404) return false;
+    throw e;
+  }
+}
+
+
 export async function create_db(name) {
   const res = request('put', `/${name}`);
   return res.body;
@@ -39,13 +79,18 @@ export async function delete_db(name) {
 }
 
 export async function create_filters(db_name) {
+  let rev;
+  
+  try {
+    const res = await request('get', `/${DB.interactions_db}/_design/filters`);
+    rev = res.body._rev;
+  } catch (e) { /* nop */ }
+  
   const res = request('post', `/${DB.interactions_db}`, {
     json: {
       _id: "_design/filters",
-      filters: {
-        "new": "function(doc, req) { return doc.status == 'new'; }",
-        "updates": "function(doc, req) { return doc._id == req.query.doc_id && (doc.status == 'waiting' || doc.status == 'done'); }"
-      }
+      _rev: rev,
+      filters: interactions_filters
     }
   });
   return res.body;

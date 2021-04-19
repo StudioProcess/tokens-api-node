@@ -181,6 +181,19 @@ app.get('/update_interaction', async (req, res) => {
 });
 
 
+// db check
+const db_status = await db.check_dbs();
+if ( Object.values(db_status).some(x => x == false) ) {
+  console.error('dbs not ready', db_status);
+  process.exit();
+}
+// filter check
+const filter_status = await db.check_filters();
+if (!filter_status) {
+  await db.create_filters();
+  console.log('updated filters');
+}
+// start server
 const server = app.listen(CONFIG.port, () => {
   console.log('Server running on port ' + CONFIG.port);
 });
