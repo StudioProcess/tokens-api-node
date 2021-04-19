@@ -22,7 +22,9 @@ const interactions_filters = {
   incomplete -> new -> waiting -> done
 */
 
-export async function request(method='get', path='', options={}) {
+
+// Note: Not defined async (no need, since it doesn't use await). Async removes cancel method from returned promise
+export function request(method='get', path='', options={}) {
   let config_options = {};
   if (DB.request_options) config_options = DB.request_options;
   options = Object.assign({
@@ -69,12 +71,12 @@ export async function check_filters() {
 
 
 export async function create_db(name) {
-  const res = request('put', `/${name}`);
+  const res = await request('put', `/${name}`);
   return res.body;
 }
 
 export async function delete_db(name) {
-  const res = request('delete', `/${name}`);
+  const res = await request('delete', `/${name}`);
   return res.body;
 }
 
