@@ -87,18 +87,23 @@ export async function get_single_token(id) {
 }
 
 async function get_tokens_offset(offset=0, count=1, newest_first=true) {
-  if (offset < -1) throw {'error': 'offset out of range'};
-  // TODO: support all negative offsets
+  if (offset >= 0) {
+    return get_tokens_offset_pos(offset, count, newest_first);
+  } else {
+    return get_tokens_offset_neg(offset, count, newest_first)
+  }
+}
+
+async function get_tokens_offset_pos(offset=0, count=1, newest_first=true) {
+  if (offset < 0) throw {'error': 'offset out of range'};
   
   const searchParams = {
     'include_docs': true,
     'skip': offset > 0 ? offset-1 : 0,
     'limit': offset > 0 ? count + 2 : count + 1,
-    'descending': offset == -1,
+    'descending': false,
   };
-  if (newest_first) {
-    searchParams.descending = !searchParams.descending;
-  }
+  if (newest_first) searchParams.descending = !searchParams.descending;
   
   const res = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
   // if (offset >= res.body.total_rows) throw {'error': 'offset out of range'};
@@ -113,13 +118,53 @@ async function get_tokens_offset(offset=0, count=1, newest_first=true) {
   body.offset = offset;
   body.newest_first = newest_first;
   
-  if (offset < 0) {
-    body.rows.reverse();
-    body.offset = body.total_rows - body.rows.length + 1;
+  if ( offset > 0 && body.rows.length > 0 ) {
+    const first = body.rows.shift();
+    body.prev = first.id;
+  } else {
+    body.prev = null;
   }
   
-  // if (offset > 0 || offset == -1) {
-  if ( (offset > 0 || offset == -1) && body.rows.length > 0 ) {
+  if (body.rows.length > count) {
+    const last = body.rows.pop();
+    body.next = last.id;
+  } else {
+    body.next = null;
+  }
+  
+  return body;
+}
+
+async function get_tokens_offset_neg(offset=-1, count=1, newest_first=true) {
+  throw {'error': 'offset out of range'}; // TODO: test negative offsets
+  
+  if (offset > -1) throw {'error': 'offset out of range'};
+  //    idx:   0   1   2   3   4
+  // offset:  -5  -4  -3  -2  -1
+
+  offset = -offset - 1; // make a zero based index (from the end): -1 -> 0, -2 -> 1, -3 -> 2, ...
+  const searchParams = {
+    'include_docs': true,
+    'skip': offset-count > 0 ? offset-count-1 : 0,
+    'limit': offset > 0 ? count+2 : count+1,
+    'descending': true,
+  };
+  if (newest_first) searchParams.descending = !searchParams.descending;
+  
+  const res = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
+  const body = res.body;
+  body.rows = body.rows.map(row => {
+    row.doc.id = row.doc._id;
+    delete row.doc._id;
+    delete row.doc._rev;
+    return row.doc;
+  });
+  
+  body.newest_first = newest_first;
+  body.rows.reverse();
+  body.offset = body.total_rows - offset - 1;
+  
+  if ( offset > 0 && body.rows.length > 0 ) {
     const first = body.rows.shift();
     body.prev = first.id;
   } else {

@@ -44,18 +44,18 @@ tap.test('get tokens by offset', async t => {
   });
   
   // last page
-  res = await db.get_tokens(-1, null, null, 3, true);
-  // console.log(res);
-  t.same(res.rows[0], tokens[tokens.length-3]);
-  t.same(res.rows[1], tokens[tokens.length-2]);
-  t.same(res.rows[2], tokens[tokens.length-1]);
-  t.hasStrict(res, {
-    offset: tokens.length-3,
-    total_rows: tokens.length,
-    newest_first: true,
-    prev: tokens[tokens.length-4].id,
-    next: null,
-  });
+  // res = await db.get_tokens(-1, null, null, 3, true);
+  // // console.log(res);
+  // t.same(res.rows[0], tokens[tokens.length-3]);
+  // t.same(res.rows[1], tokens[tokens.length-2]);
+  // t.same(res.rows[2], tokens[tokens.length-1]);
+  // t.hasStrict(res, {
+  //   offset: tokens.length-3,
+  //   total_rows: tokens.length,
+  //   newest_first: true,
+  //   prev: tokens[tokens.length-4].id,
+  //   next: null,
+  // });
   
   // middle page
   res = await db.get_tokens(4, null, null, 3, true);
