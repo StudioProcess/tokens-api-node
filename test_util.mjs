@@ -3,6 +3,7 @@ import * as db from './db.mjs';
 
 export const _db = {};
 export let _server;
+export let _generator;
 
 export const match_id = /[0-9a-f]{32}/; // 32 hex digits
 export const match_color = /#[0-9a-f]{6}/; // hex color
@@ -68,4 +69,16 @@ export async function start_server() {
 export function stop_server() {
   console.log('stopping server');
   _server.close(0);
+}
+
+export async function start_generator() {
+  console.log('starting mock generator');
+  _generator = await import('./mock-generator.mjs');
+  _generator.CONFIG.display_time = 1500;
+  return _generator;
+}
+
+export function stop_generator() {
+  console.log('stopping mock generator');
+  _generator.stop();
 }

@@ -41,8 +41,8 @@ export function rnd_hash(len = 64) {
  * Create random SVG
  * Consists of a single circle and two lines.
  */
-export function random_svg() {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" style="stroke:black; stroke-width:10; fill:none;">
+export function random_svg(custom_attr_str='') {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" style="stroke:black; stroke-width:10; fill:none;"${custom_attr_str ? ' ' + custom_attr_str : ''}>
   <circle cx="${rnd(1000)}" cy="${rnd(1000)}" r="${rnd(1000/3, 1000)}"/>
   <line x1="${rnd(1000)}" y1="${rnd(1000)}" x2="${rnd(1000)}" y2="${rnd(1000)}"/>
   <line x1="${rnd(1000)}" y1="${rnd(1000)}" x2="${rnd(1000)}" y2="${rnd(1000)}"/>
@@ -51,9 +51,25 @@ export function random_svg() {
 
 /**
  * Async sleep
+ * Note: Not defined async (no need, since it doesn't use await)
+ * Async removes cancel method from returned promise.
  */
-export async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+export function sleep(ms) {
+  let _reject;
+  let _timeout;
+  
+  const promise = new Promise( (resolve, reject) => {
+    _reject = reject;
+    _timeout = setTimeout(resolve, ms);
+  });
+  
+  // add a cancel function to the promise
+  promise.cancel = function cancel()  {
+    clearTimeout(_timeout);
+    _reject();
+  };
+  
+  return promise;
 }
 
 /**

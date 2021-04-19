@@ -106,7 +106,7 @@ export async function get_uuids(n=1) {
 }
 
 
-// Returns: { id: '' }
+// Returns: { id }
 export async function put_token(token) {
   const res = await request('post', `/${DB.tokens_db}`, {json: token});
   // res.body: { ok: true, id: '', rev: '' }
@@ -394,7 +394,7 @@ export async function update_interaction(id, queue_position, token_id=null) {
   return '';
 }
 
-// Returns: { id, color, keywords }
+// Returns: { id, seq, color, keywords }
 export async function get_new_interaction_updates(since=0) {
   const res = await request('get', `/${DB.interactions_db}/_changes`, {
     searchParams: {
@@ -408,6 +408,7 @@ export async function get_new_interaction_updates(since=0) {
   return {
     id: doc._id,
     color: doc.color,
-    keywords: doc.keywords
+    keywords: doc.keywords,
+    seq: res.body.seq
   };
 }

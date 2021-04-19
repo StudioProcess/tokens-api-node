@@ -123,10 +123,17 @@ app.get('/get_tokens', async (req, res) => {
   }
 });
 
+app.use('/put_token', express.json()); // activate json body parsing
 
-// app.get('/put_token', async (req, res) => {
-// });
-// 
+app.put('/put_token', async (req, res) => {
+  try {
+    const result = await db.put_token(req.body);
+    res.json(result);
+  } catch (e) {
+    other_error(res, e);
+  }
+});
+
 // app.get('/delete_token', async (req, res) => {
 // });
 
