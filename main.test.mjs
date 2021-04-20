@@ -60,6 +60,12 @@ tap.test('put token', async t => {
     json: token
   });
   t.match(res.body.id, test_util.match_id);
+  try {
+    res = await db.delete_token(res.body.id);
+    t.equal(res, '', 'deleted again');
+  } catch {
+    t.fail('error deleting token again');
+  }
 });
 
 
