@@ -31,6 +31,23 @@ tap.test('get token', async t => {
   t.same(res.body, tokens[0]);
 });
 
+tap.test('get svg', async t => {
+  let res = await got('http://localhost:3000/get_svg', {
+    searchParams: { id: tokens[0].id }
+  });
+  t.same(res.body, tokens[0].svg, 'got svg text');
+  t.match(res.headers, {'content-type': 'image/svg+xml; charset=utf-8'}, 'headers')
+  
+  res = await got('http://localhost:3000/get_svg', {
+    searchParams: { id: tokens[1].id, download:true }
+  });
+  t.same(res.body, tokens[1].svg, 'got svg text');
+  t.match(res.headers, {
+    'content-type': 'application/octet-stream; charset=utf-8',
+    'content-disposition': `attachment; filename="token-${tokens[1].id}.svg"`
+  }, 'headers');
+});
+
 tap.test('put token', async t => {
   const token = {
     svg: util.random_svg(),

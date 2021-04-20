@@ -124,6 +124,31 @@ app.get('/get_token', require_sub('public', 'admin'), async (req, res) => {
   }
 });
 
+app.get('/get_svg', async (req, res) => {
+  // no id (null, undefined, '')
+  if (!req.query.id) {
+    res.status(400).json({error: 'id missing'});
+    return;
+  }
+  
+  try {
+    const token = await db.get_single_token(req.query.id);
+    if (req.query.download) {
+      res.attachment(`token-${token.id}.svg`);
+      res.type('application/octet-stream');
+    } else {
+      res.type('image/svg+xml');
+    }
+    res.send(token.svg);
+  } catch (e) {
+    // 404 object not found
+    if (e.response?.statusCode == 404) {
+      res.status(404).json({error: 'token not found'}) ;
+      return;
+    }
+    other_error(res, e);
+  }
+});
 
 app.get('/get_tokens', require_sub('public', 'admin'), async (req, res) => {
   if (req.query.offset == undefined && req.query.start_id == undefined && req.query.end_id == undefined) {
