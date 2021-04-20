@@ -43,20 +43,6 @@ tap.test('get tokens by offset', async t => {
     next: tokens[3].id,
   });
   
-  // last page
-  // res = await db.get_tokens(-1, null, null, 3, true);
-  // // console.log(res);
-  // t.same(res.rows[0], tokens[tokens.length-3]);
-  // t.same(res.rows[1], tokens[tokens.length-2]);
-  // t.same(res.rows[2], tokens[tokens.length-1]);
-  // t.hasStrict(res, {
-  //   offset: tokens.length-3,
-  //   total_rows: tokens.length,
-  //   newest_first: true,
-  //   prev: tokens[tokens.length-4].id,
-  //   next: null,
-  // });
-  
   // middle page
   res = await db.get_tokens(4, null, null, 3, true);
   // console.log(res);
@@ -69,6 +55,118 @@ tap.test('get tokens by offset', async t => {
     newest_first: true,
     prev: tokens[3].id,
     next: tokens[7].id,
+  });
+  
+  // hanging at the end
+  res = await db.get_tokens(8, null, null, 3, true);
+  // console.log(res);
+  t.same(res.rows[0], tokens[8]);
+  t.same(res.rows[1], tokens[9]);
+  t.hasStrict(res, {
+    offset: 8,
+    total_rows: tokens.length,
+    newest_first: true,
+    prev: tokens[7].id,
+    next: null
+  });
+  
+  // overshoot
+  res = await db.get_tokens(10, null, null, 3, true);
+  // console.log(res);
+  t.hasStrict(res, {
+    rows: [],
+    offset: 10,
+    total_rows: tokens.length,
+    newest_first: true,
+    prev: tokens[9].id,
+    next: null
+  });
+  
+  // overshoot fully
+  res = await db.get_tokens(11, null, null, 3, true);
+  // console.log(res);
+  t.hasStrict(res, {
+    rows: [],
+    offset: 11,
+    total_rows: tokens.length,
+    newest_first: true,
+    prev:  null,
+    next: null
+  });
+});
+
+tap.test('get tokens by offset (negative)', async t => {
+  // middle
+  let res = await db.get_tokens(-3, null, null, 2, true);
+  // console.log(res);
+  t.same(res.rows[0], tokens[tokens.length-3]);
+  t.same(res.rows[1], tokens[tokens.length-2]);
+  t.hasStrict(res, {
+    offset: -3,
+    total_rows: tokens.length,
+    newest_first: true,
+    prev: tokens[tokens.length-4].id,
+    next: tokens[tokens.length-1].id,
+  });
+  
+  // just the last one
+  res = await db.get_tokens(-1, null, null, 1, true);
+  // console.log(res);
+  t.same(res.rows[0], tokens[tokens.length-1]);
+  t.hasStrict(res, {
+    offset: -1,
+    total_rows: tokens.length,
+    newest_first: true,
+    prev: tokens[tokens.length-2].id,
+    next: null
+  });
+  
+  // hanging at the end
+  res = await db.get_tokens(-3, null, null, 5, true);
+  // console.log(res);
+  t.same(res.rows[0], tokens[tokens.length-3]);
+  t.same(res.rows[1], tokens[tokens.length-2]);
+  t.same(res.rows[2], tokens[tokens.length-1]);
+  t.hasStrict(res, {
+    offset: -3,
+    total_rows: tokens.length,
+    newest_first: true,
+    prev: tokens[tokens.length-4].id,
+    next: null
+  });
+  
+  // all the way back
+  res = await db.get_tokens(-tokens.length, null, null, 2, true);
+  t.same(res.rows[0], tokens[0]);
+  t.same(res.rows[1], tokens[1]);
+  t.hasStrict(res, {
+    offset: -tokens.length,
+    total_rows: tokens.length,
+    newest_first: true,
+    prev: null,
+    next: tokens[2].id,
+  });
+  
+  // overshoot
+  res = await db.get_tokens(-tokens.length-1, null, null, 1, true);
+  t.hasStrict(res, {
+    rows: [],
+    offset: -tokens.length-1,
+    total_rows: tokens.length,
+    newest_first: true,
+    prev: null,
+    next: tokens[0].id,
+  });
+  
+  // overshoot fully
+  res = await db.get_tokens(-tokens.length-10, null, null, 1, true);
+  t.hasStrict(res, {
+    rows: [],
+    offset: -tokens.length-10,
+    total_rows: tokens.length,
+    newest_first: true,
+    prev: null,
+    next: null,
   });
 });
 

@@ -99,32 +99,6 @@ tap.test('get tokens by offset (errors)', async t => {
     }, 'none of offset, start_id, end_id given');
   }
   
-  // try {
-  //   await got('http://localhost:3000/get_tokens', {
-  //     responseType: 'json',
-  //     searchParams: { offset: 10 }
-  //   });
-  //   t.fail('should throw');
-  // } catch (e) {
-  //   t.match(e.response, {
-  //     statusCode: 400,
-  //     body: {error: 'offset out of range'}
-  //   }, 'offset too big');
-  // }
-  
-  try {
-    await got('http://localhost:3000/get_tokens', {
-      responseType: 'json',
-      searchParams: { offset: -2 }
-    });
-    t.fail('should throw');
-  } catch (e) {
-    t.match(e.response, {
-      statusCode: 400,
-      body: {error: 'offset out of range'}
-    }, 'offset too small');
-  }
-  
   try {
     await got('http://localhost:3000/get_tokens', {
       responseType: 'json',
@@ -169,5 +143,22 @@ tap.test('get tokens by offset (errors)', async t => {
     body: { offset:99, rows: [], prev: null, next: null }
   }, 'going over more');
   
+  res = await got('http://localhost:3000/get_tokens', {
+    responseType: 'json',
+    searchParams: { offset:-11, count:1 }
+  });
+  t.match(res, {
+    statusCode: 200,
+    body: { offset:-11, rows: [], prev: null, next: tokens[0].id }
+  }, 'going one below');
+  
+  res = await got('http://localhost:3000/get_tokens', {
+    responseType: 'json',
+    searchParams: { offset:-99, count:1 }
+  });
+  t.match(res, {
+    statusCode: 200,
+    body: { offset:-99, rows: [], prev: null, next: null }
+  }, 'going below more');
 });
 

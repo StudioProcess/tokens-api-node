@@ -188,17 +188,16 @@ async function get_tokens_offset_pos(offset=0, count=1, newest_first=true) {
 }
 
 async function get_tokens_offset_neg(offset=-1, count=1, newest_first=true) {
-  throw {'error': 'offset out of range'}; // TODO: test negative offsets
-  
-  if (offset > -1) throw {'error': 'offset out of range'};
+  if (offset >= 0) throw {'error': 'offset out of range'};
   //    idx:   0   1   2   3   4
   // offset:  -5  -4  -3  -2  -1
 
   offset = -offset - 1; // make a zero based index (from the end): -1 -> 0, -2 -> 1, -3 -> 2, ...
+  count = Math.min(count, offset + 1); // limit count to available size at the end
   const searchParams = {
     'include_docs': true,
-    'skip': offset-count > 0 ? offset-count-1 : 0,
-    'limit': offset > 0 ? count+2 : count+1,
+    'skip': offset-count <= 0 ? 0 : offset-count,
+    'limit': offset-count >= 0 ? count+2 : count+1,
     'descending': true,
   };
   if (newest_first) searchParams.descending = !searchParams.descending;
@@ -214,20 +213,21 @@ async function get_tokens_offset_neg(offset=-1, count=1, newest_first=true) {
   
   body.newest_first = newest_first;
   body.rows.reverse();
-  body.offset = body.total_rows - offset - 1;
+  body.offset = -offset-1; // provide original negative offset
   
-  if ( offset > 0 && body.rows.length > 0 ) {
-    const first = body.rows.shift();
-    body.prev = first.id;
-  } else {
-    body.prev = null;
-  }
-  
-  if (body.rows.length > count) {
+  // needs to be done first
+  if ( offset-count+1 > 0 && body.rows.length > 0 ) {
     const last = body.rows.pop();
     body.next = last.id;
   } else {
     body.next = null;
+  }
+  
+  if ( body.rows.length > count ) {
+    const first = body.rows.shift();
+    body.prev = first.id;
+  } else {
+    body.prev = null;
   }
   
   return body;

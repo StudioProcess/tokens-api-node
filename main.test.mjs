@@ -105,6 +105,47 @@ tap.test('get tokens (offset)', async t => {
   t.same(res.body.newest_first, true);
 });
 
+tap.test('get tokens (negative offset)', async t => {
+  let res = await got('http://localhost:3000/get_tokens', {
+    responseType: 'json',
+    searchParams: { offset:-1, count:1 }
+  });
+  t.hasStrict(res.body, {
+    offset: -1,
+    total_rows: tokens.length,
+    rows: [ tokens[9] ],
+    prev: tokens[8].id,
+    next: null,
+    newest_first: true
+  });
+  
+  res = await got('http://localhost:3000/get_tokens', {
+    responseType: 'json',
+    searchParams: { offset:-5, count:3 }
+  });
+  t.hasStrict(res.body, {
+    offset: -5,
+    total_rows: tokens.length,
+    rows: [ tokens[tokens.length-5], tokens[tokens.length-4], tokens[tokens.length-3] ],
+    prev: tokens[tokens.length-6].id,
+    next: tokens[tokens.length-2].id,
+    newest_first: true
+  });
+  
+  res = await got('http://localhost:3000/get_tokens', {
+    responseType: 'json',
+    searchParams: { offset:-10, count:2 }
+  });
+  t.hasStrict(res.body, {
+    offset: -10,
+    total_rows: tokens.length,
+    rows: [ tokens[0], tokens[1] ],
+    prev: null,
+    next: tokens[2].id,
+    newest_first: true
+  });
+});
+
 tap.test('get tokens (from id)', async t => {
   let res = await got('http://localhost:3000/get_tokens', {
     responseType: 'json',
