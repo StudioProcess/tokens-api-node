@@ -80,6 +80,11 @@ export async function delete_db(name) {
   return res.body;
 }
 
+export async function all_dbs(name) {
+  const res = await request('get', `/_all_dbs`);
+  return res.body;
+}
+
 export async function create_filters(db_name) {
   let rev;
   

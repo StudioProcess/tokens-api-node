@@ -57,6 +57,21 @@ export async function teardown_mock_db() {
   await db.delete_db(_db.tokens_db);
   console.log('deleting db ' + _db.interactions_db);
   await db.delete_db(_db.interactions_db);
+  
+  await cleanup_mock_dbs();
+}
+
+export async function cleanup_mock_dbs() {
+  console.log('cleanup mock dbs:');
+  let dbs = await db.all_dbs();
+  dbs = dbs.filter( db => (/-[0-9a-f]{7}/).test(db) );
+  if (dbs.length == 0) {
+    console.log('all clean');
+    return;
+  }
+  console.log('deleting dbs', dbs.join(', '));
+  const deletes = dbs.map(db.delete_db);
+  return Promise.all(deletes);
 }
 
 export async function start_server() {
