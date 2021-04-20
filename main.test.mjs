@@ -31,6 +31,20 @@ tap.test('get token', async t => {
   t.same(res.body, tokens[0]);
 });
 
+tap.test('put token', async t => {
+  const token = {
+    svg: util.random_svg(),
+    generated: util.timestamp(),
+    keywords: ['x', 'y', 'z']
+  };
+  let res = await got('http://localhost:3000/put_token', {
+    method: 'put',
+    responseType: 'json',
+    json: token
+  });
+  t.match(res.body.id, test_util.match_id);
+});
+
 
 tap.test('get tokens (offset)', async t => {
   let res = await got('http://localhost:3000/get_tokens', {

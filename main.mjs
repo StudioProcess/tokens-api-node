@@ -158,6 +158,12 @@ app.get('/get_tokens', require_sub('public', 'admin'), async (req, res) => {
 app.use('/put_token', express.json()); // activate json body parsing
 app.put('/put_token', require_sub('generator', 'admin'), async (req, res) => {
   try {
+    const token = req.body;
+    // check required attributes: svg, generated, keywords
+    if (!token.svg || !token.generated || !token.keywords) {
+      res.status(400).json({error: 'required attribute(s) missing'})
+      return;
+    }
     const result = await db.put_token(req.body);
     res.json(result);
   } catch (e) {
