@@ -237,4 +237,3 @@ tap.test('interaction sequence', async t => {
   });
   t.match(res5.body, {id: res.body.id, queue_position: 0, token_id: new_token_id});
 });
-

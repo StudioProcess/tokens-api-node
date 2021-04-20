@@ -74,11 +74,12 @@ export async function cleanup_mock_dbs() {
   return Promise.all(deletes);
 }
 
-export async function start_server() {
+export async function start_server(enable_auth=false) {
   console.log('starting server');
   const main = await import('./main.mjs');
+  main.CONFIG.enable_auth = enable_auth;
   _server = main.default;
-  return _server;
+  return main;
 }
 
 export function stop_server() {

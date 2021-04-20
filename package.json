@@ -13,11 +13,12 @@
   "author": "Martin Grödl <martin@process.studio> (https://process.studio)",
   "license": "AGPL-3.0",
   "engines": {
-    "node": "14.16.1",
-    "npm": "7.8.0"
+    "node": ">=14.16.1",
+    "npm": ">=7.8.0"
   },
   "dependencies": {
     "express": "^4.17.1",
+    "express-jwt": "^6.0.0",
     "got": "^11.8.2"
   },
   "devDependencies": {
