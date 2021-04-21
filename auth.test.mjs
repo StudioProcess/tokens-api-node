@@ -14,6 +14,7 @@ const jwt = {
   'exhibition': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJleGhpYml0aW9uIiwiaWF0IjoxNjE4OTExMzQ3fQ.e5kY-LCmQExcF-2_KwQLb0GwNxBumZ0JnXQpug1v0Gw',
   'generator': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnZW5lcmF0b3IiLCJpYXQiOjE2MTg5MTEzNDd9.h7SozQu7gvVvOyz2oTYDY0l1KmRtcgdlvsjUzzjfOOc',
   'admin': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTYxODkxMTM0N30.03J1hfDICkGYnZkb-AHfo1vg_fcwX3XbiCeCb8R1kOo',
+  'nosub': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTg5MTEzNDd9.jMi0STz9YCWO0sfHo0hKQZhfOPUzVmXl2cmDYxpf-kg',
   // Invalid auth tokens
   'garbage': 'asdkfkjalsdfjasdkfkjalsdfjasdkfkjalsdfjasdkfkjalsdfj',
   'public_invalid': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwdWJsaWMiLCJpYXQiOjE2MTg5MTEzNDd9.XXXXX',
@@ -191,4 +192,48 @@ tap.test('no auth needed', async t => {
     headers: { 'Authorization': 'Bearer ' + jwt.public_invalid }
   });
   t.equal(res.statusCode, 200, 'no auth needed, but invalid supplied');
+});
+
+tap.test('check all routes', async t => {
+  async function check_route(method, route, allowed_subs, ) {
+    const all_subs = ['public', 'exhibition', 'generator', 'admin', 'nosub'];
+    for (let sub of all_subs) {
+      if (allowed_subs.includes(sub)) {
+        // should get a 200 or some error, but NOT errors 401 and 403
+        try {
+          let res = await got(route, {
+            method, 
+            headers: { 'Authorization': 'Bearer ' + jwt[sub] }
+          });
+          t.equal(res.statusCode, 200, `${route} ${sub} 200`)
+        } catch (e) {
+          t.ok( e.response.statusCode != 401 && e.response.statusCode != 403, `${route} ${sub} -> allowed`);
+        }
+      } else {
+        // should get a 401 or 403
+        try {
+          let res = await got(route, {
+            method,
+            headers: { 'Authorization': 'Bearer ' + jwt[sub] }
+          });
+          t.fail(`${route} should not allow sub ${sub}`)
+        } catch (e) {
+          t.ok( e.response.statusCode == 401 || e.response.statusCode == 403, `${route} ${sub} -> rejected`);
+        }
+      }
+    }
+  }
+  
+  await check_route('get', '/get_token', ['public', 'admin']);
+  await check_route('get', '/get_tokens', ['public', 'admin']);
+  
+  await check_route('get', '/get_svg', ['public', 'exhibition', 'generator', 'admin', 'nosub']);
+  
+  await check_route('get', '/request_interaction', ['exhibition', 'admin']);
+  // TODO: implement errors for these routes before testing access
+  // await check_route('/deposit_interaction', ['exhibition', 'admin']);
+  // await check_route('/get_single_interaction_updates', ['exhibition', 'admin']);
+  // await check_route('put', '/put_token', ['generator', 'admin']);
+  // await check_route('/get_new_interaction_updates', ['generator', 'admin']);
+  // await check_route('get', '/update_interaction', ['generator', 'admin']);
 });
