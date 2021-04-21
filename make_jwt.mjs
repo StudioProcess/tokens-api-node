@@ -9,7 +9,6 @@ import { unix_seconds } from './util.mjs';
 const CONFIG = JSON.parse(readFileSync('./main.config.json'));
 const JWT_SECRET = process.env.JWT_SECRET || readFileSync(CONFIG.auth.jwt_secret, {encoding:'utf8'}).trim();
 
-
 function to_unix_seconds(date_str) {
   return Math.floor(new Date(date_str).getTime() / 1000);
 }
@@ -19,7 +18,7 @@ export function sign(payload) {
 }
 
 export function verify(token) {
-  return jwt.verify(token, JWT_SECRET);
+  return jwt.verify(token, JWT_SECRET, {ignoreNotBefore:true, ignoreExpiration:true});
 }
 
 // subject, not before, expiration

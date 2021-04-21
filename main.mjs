@@ -8,42 +8,56 @@ import * as db from './db.mjs';
 import { log_req, pick } from './util.mjs';
 
 export const CONFIG = JSON.parse(readFileSync('./main.config.json'));
-const app = express();
-
-// decode "Authorization: Bearer" on all requests and place a 'user' object on req
 const JWT_SECRET = process.env.JWT_SECRET || readFileSync(CONFIG.auth.jwt_secret, {encoding:'utf8'}).trim();
-app.use('/', jwt( {secret:JWT_SECRET, algorithms:['HS256']} ));
-app.use((err, req, res, next) => {
-  // allow invalid or missing auth by default
-  if (err.name == 'UnauthorizedError') next();
-});
+
+const app = express();
 
 // middleware to require jwt subjects
 function require_sub(...subs) {
-  return function (req, res, next) {
-    // pass if auth disabled or no subjects are required
-    if (CONFIG.auth.enabled === false || subs.length == 0) {
+  return [
+    // decode "Authorization: Bearer" on all requests and place a 'user' object on req
+    jwt({ secret: JWT_SECRET, algorithms: ['HS256'] }),
+    // handle jwt validation errors (not called if no error occurs)
+    function (err, req, res, next) {
+      if (err.name == 'UnauthorizedError') {
+        // ignore auth errors if auth is globally disabled or no subjects required
+        if (CONFIG.auth.enabled === false || subs.length == 0) { 
+          next(); 
+          return; 
+        }
+        if (err.inner?.name == 'NotBeforeError') {
+          res.status(401).json({'error': 'token not yet active'});
+          return;
+        }
+        if (err.inner?.name == 'TokenExpiredError') {
+          res.status(401).json({'error': 'token expired'});
+          return;
+        }
+        // other errors (missing auth, invalid signature, malformed token)
+        res.status(401).json({'error': 'invalid auth'});
+        return;
+      }
       next();
-      return;
+    },
+    // no jwt errors, check subject
+    function (req, res, next) {
+      // pass if auth is disabled or no subjects are required
+      if (CONFIG.auth.enabled === false || subs.length == 0) { next(); return; }
+      // check if token subject is one of the required subjects
+      // console.log('got sub:', req.user.sub);
+      if ( !subs.includes(req.user.sub) ) {
+        res.status(403).json({'error': 'wrong subject'});
+        return;
+      }
+      // check if subject isn't expired (issued at or after latest issue date for the role)
+      // doesn't apply if no issued_at is defined for a subject
+      if ( req.user.iat < CONFIG.auth.subject_issued_at[req.user.sub] ) {
+        res.status(403).json({'error': 'subject expired'});
+        return;
+      }
+      next();
     }
-    // check if authorization is present at all (no auth given or wrong signature)
-    if (req.user == undefined) {
-      res.status(401).json({'error': 'invalid auth'});
-      return;
-    }
-    // check if token subject is one of the required subjects
-    if ( !subs.includes(req.user.sub) ) {
-      res.status(403).json({'error': 'wrong subject'});
-      return;
-    }
-    // check if subject isn't expired (issued at or after latest issue date for the role)
-    // doesn't apply if no issued_at is defined for a subject
-    if ( req.user.iat < CONFIG.auth.subject_issued_at[req.user.sub] ) {
-      res.status(403).json({'error': 'expired'});
-      return;
-    }
-    next();
-  };
+  ];
 }
 
 
@@ -69,7 +83,7 @@ function parse_query(req, res, next) {
   };
   next();
 }
-app.use('/', parse_query);
+app.use(parse_query);
 
 
 function other_error(res, e) {

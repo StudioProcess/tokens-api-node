@@ -7,9 +7,9 @@ import { request as got } from './test_util.mjs';
 let tokens;
 let main;
 
-// auth tokens with iat 1618911347
 const secret = 'y2ZHC@KS/KW6Nw;whGVKl-Nc2y/;HpOc';
 const jwt = {
+  // auth tokens with iat 1618911347
   'public': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwdWJsaWMiLCJpYXQiOjE2MTg5MTEzNDd9.AEVgH4zM-Uhwe5WjNOtoumah7jPJS4JbecOR1jXiJ4M',
   'exhibition': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJleGhpYml0aW9uIiwiaWF0IjoxNjE4OTExMzQ3fQ.e5kY-LCmQExcF-2_KwQLb0GwNxBumZ0JnXQpug1v0Gw',
   'generator': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnZW5lcmF0b3IiLCJpYXQiOjE2MTg5MTEzNDd9.h7SozQu7gvVvOyz2oTYDY0l1KmRtcgdlvsjUzzjfOOc',
@@ -17,7 +17,11 @@ const jwt = {
   // Invalid auth tokens
   'garbage': 'asdkfkjalsdfjasdkfkjalsdfjasdkfkjalsdfjasdkfkjalsdfj',
   'public_invalid': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwdWJsaWMiLCJpYXQiOjE2MTg5MTEzNDd9.XXXXX',
-  'public_expired': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwdWJsaWMiLCJpYXQiOjB9.QEtArEa4Iz5ZltOWAHsH8FsF2TBqpq21OpfUpX2XHmU'
+  'public_expired': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwdWJsaWMiLCJpYXQiOjB9.QEtArEa4Iz5ZltOWAHsH8FsF2TBqpq21OpfUpX2XHmU',
+  // Timing (w/exhibition subject)
+  'not_yet': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJleGhpYml0aW9uIiwiaWF0IjoxNjE5MDEyNjUxLCJuYmYiOjQ3NjUxMzI4MDAsImV4cCI6NDc3MjkwODgwMH0.J8ptiAnX3UQr5lO_F3yO2UBWWEHxG3utiig36kw5Pgo',
+  'expired': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJleGhpYml0aW9uIiwiaWF0IjoxNjE5MDE0MTY3LCJuYmYiOjE1Nzc4MzY4MDAsImV4cCI6MTYwOTQ1OTIwMH0.hqbEGSGEUw3R2h_OqjLUO-HOXHcQjyY_wRZcDRqTUxk',
+  'in_time': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJleGhpYml0aW9uIiwiaWF0IjoxNjE5MDEyNjI2LCJuYmYiOjE1Nzc4MzY4MDAsImV4cCI6NDc2NTEzMjgwMH0.e-lovqukzSJcH7Hacx03nCh2wqPtgpcGVG2HMR2N4_w',
 };
 
 tap.before(async () => {
@@ -125,8 +129,66 @@ tap.test('get token', async t => {
   } catch (e) {
     t.match(e.response, {
       statusCode: 403,
-      body: {error: 'expired'}
-    }, 'invalid token (expired)');
+      body: {error: 'subject expired'}
+    }, 'invalid token (subject expired)');
   }
+});
 
+tap.test('request_interaction', async t => {
+  try {
+    let res = await got('/request_interaction', {
+      responseType: 'json',
+      headers: { 'Authorization': 'Bearer ' + jwt.not_yet }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 401,
+      body: {error: 'token not yet active'}
+    }, 'not yet active');
+  }
+  
+  try {
+    let res = await got('/request_interaction', {
+      responseType: 'json',
+      headers: { 'Authorization': 'Bearer ' + jwt.expired }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 401,
+      body: {error: 'token expired'}
+    }, 'expired');
+  }
+  
+  let res = await got('/request_interaction', {
+    responseType: 'json',
+    headers: { 'Authorization': 'Bearer ' + jwt.in_time }
+  });
+  t.equal(res.statusCode, 200, 'in time');
+});
+
+tap.test('no auth needed', async t => {
+  let res = await got('/get_svg', {
+    searchParams: { id: tokens[0].id }
+  });
+  t.equal(res.statusCode, 200, 'no auth');
+  
+  res = await got('/get_svg', {
+    searchParams: { id: tokens[0].id },
+    headers: { 'Authorization': 'Bearer ' + jwt.garbage }
+  });
+  t.equal(res.statusCode, 200, 'no auth needed, but garbage supplied');
+  
+  res = await got('/get_svg', {
+    searchParams: { id: tokens[0].id },
+    headers: { 'Authorization': 'Bearer ' + jwt.public }
+  });
+  t.equal(res.statusCode, 200, 'no auth needed, but valid supplied');
+  
+  res = await got('/get_svg', {
+    searchParams: { id: tokens[0].id },
+    headers: { 'Authorization': 'Bearer ' + jwt.public_invalid }
+  });
+  t.equal(res.statusCode, 200, 'no auth needed, but invalid supplied');
 });
