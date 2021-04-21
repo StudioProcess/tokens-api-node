@@ -81,7 +81,7 @@ export async function cleanup_mock_dbs() {
 export async function start_server(enable_auth=false) {
   console.log('starting server');
   const main = await import('./main.mjs');
-  main.CONFIG.enable_auth = enable_auth;
+  main.CONFIG.auth.enabled = enable_auth;
   _server = main.default;
   return main;
 }

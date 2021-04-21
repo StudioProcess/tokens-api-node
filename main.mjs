@@ -8,11 +8,11 @@ import * as db from './db.mjs';
 import { log_req, pick } from './util.mjs';
 
 export const CONFIG = JSON.parse(readFileSync('./main.config.json'));
-
 const app = express();
 
 // decode "Authorization: Bearer" on all requests and place a 'user' object on req
-app.use('/', jwt( {secret:CONFIG.auth.jwt_secret, algorithms:['HS256']} ));
+const JWT_SECRET = process.env.JWT_SECRET || readFileSync(CONFIG.auth.jwt_secret, {encoding:'utf8'}).trim();
+app.use('/', jwt( {secret:JWT_SECRET, algorithms:['HS256']} ));
 app.use((err, req, res, next) => {
   // allow invalid or missing auth by default
   if (err.name == 'UnauthorizedError') next();

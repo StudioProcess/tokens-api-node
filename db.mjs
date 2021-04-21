@@ -1,8 +1,9 @@
 import { readFileSync } from 'fs';
 import got from 'got';
 
-export const DB = JSON.parse(readFileSync('./db.config.json'));
-export const COLORS = JSON.parse(readFileSync('./colors.config.json'));
+const CONFIG = JSON.parse(readFileSync('./main.config.json'));
+export const DB = JSON.parse(readFileSync(CONFIG.db_config));
+export const COLORS = JSON.parse(readFileSync(CONFIG.colors_config));
 
 export const colors = Object.values(COLORS);
 export let color_idx = 0;

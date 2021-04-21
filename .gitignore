@@ -4,3 +4,4 @@ venv
 .venv
 .nyc_output
 db.config.json
+auth.secret

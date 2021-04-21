@@ -5,8 +5,10 @@ import * as test_util from './test_util.mjs';
 import { request as got } from './test_util.mjs';
 
 let tokens;
+let main;
 
 // auth tokens with iat 1618911347
+const secret = 'y2ZHC@KS/KW6Nw;whGVKl-Nc2y/;HpOc';
 const jwt = {
   'public': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwdWJsaWMiLCJpYXQiOjE2MTg5MTEzNDd9.AEVgH4zM-Uhwe5WjNOtoumah7jPJS4JbecOR1jXiJ4M',
   'exhibition': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJleGhpYml0aW9uIiwiaWF0IjoxNjE4OTExMzQ3fQ.e5kY-LCmQExcF-2_KwQLb0GwNxBumZ0JnXQpug1v0Gw',
@@ -26,7 +28,8 @@ tap.before(async () => {
     retry: 0
   };
   // start server
-  const main = await test_util.start_server(true); // server with auth enabled
+  process.env.JWT_SECRET = secret; // override secret to be used
+  main = await test_util.start_server(true); // server with auth enabled
   main.CONFIG.auth.subject_issued_at.public = 1618911347;
   main.CONFIG.auth.subject_issued_at.exhibition = 1618911347;
   main.CONFIG.auth.subject_issued_at.generator = 1618911347;
@@ -36,6 +39,10 @@ tap.before(async () => {
 tap.teardown(async () => {
   test_util.teardown_mock_db();
   test_util.stop_server();
+});
+
+tap.test('auth enabled', async t => {
+  t.equal(main.CONFIG.auth.enabled, true);
 });
 
 tap.test('get token', async t => {
