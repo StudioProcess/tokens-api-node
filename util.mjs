@@ -77,7 +77,21 @@ export function sleep(ms) {
  * e.g. "2021-04-09T15:26:14.054Z"
  */
 export function timestamp() {
-  return (new Date()).toISOString();
+  return new Date().toISOString();
+}
+
+/**
+ * Milliseconds after UNIX epoch
+ */
+export function unix_millis() {
+  return new Date().getTime();
+}
+
+/**
+ * Seconds after UNIX epoch
+ */
+export function unix_seconds() {
+  return Math.floor(unix_millis() / 1000);
 }
 
 
