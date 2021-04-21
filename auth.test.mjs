@@ -1,8 +1,8 @@
 import tap from 'tap';
-import got from 'got';
 import * as db from './db.mjs';
 import * as util from './util.mjs';
 import * as test_util from './test_util.mjs';
+import { request as got } from './test_util.mjs';
 
 let tokens;
 
@@ -39,14 +39,14 @@ tap.teardown(async () => {
 });
 
 tap.test('get token', async t => {
-  let res = await got('http://localhost:3000/get_token', {
+  let res = await got('/get_token', {
     responseType: 'json',
     searchParams: { id: tokens[0].id },
     headers: { 'Authorization': 'Bearer ' + jwt.public }
   });
   t.equal(res.statusCode, 200, 'valid auth');
   
-  res = await got('http://localhost:3000/get_token', {
+  res = await got('/get_token', {
     responseType: 'json',
     searchParams: { id: tokens[0].id },
     headers: { 'Authorization': 'Bearer ' + jwt.admin }
@@ -54,7 +54,7 @@ tap.test('get token', async t => {
   t.equal(res.statusCode, 200, 'valid auth (other valid subject)');
   
   try {
-    let res = await got('http://localhost:3000/get_token', {
+    let res = await got('/get_token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id }
     });
@@ -67,7 +67,7 @@ tap.test('get token', async t => {
   }
   
   try {
-    let res = await got('http://localhost:3000/get_token', {
+    let res = await got('/get_token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id },
       headers: { 'Authorization': 'Bearer ' + jwt.exhibition }
@@ -81,7 +81,7 @@ tap.test('get token', async t => {
   }
   
   try {
-    let res = await got('http://localhost:3000/get_token', {
+    let res = await got('/get_token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id },
       headers: { 'Authorization': 'Bearer ' + jwt.public_invalid }
@@ -95,7 +95,7 @@ tap.test('get token', async t => {
   }
   
   try {
-    let res = await got('http://localhost:3000/get_token', {
+    let res = await got('/get_token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id },
       headers: { 'Authorization': 'Bearer ' + jwt.garbage }
@@ -109,7 +109,7 @@ tap.test('get token', async t => {
   }
   
   try {
-    let res = await got('http://localhost:3000/get_token', {
+    let res = await got('/get_token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id },
       headers: { 'Authorization': 'Bearer ' + jwt.public_expired }

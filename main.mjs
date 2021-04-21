@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-
+import http from 'http';
+import https from 'https';
 import {readFileSync} from 'fs';
 import express from 'express';
 import jwt from 'express-jwt';
@@ -262,9 +263,21 @@ if (!filter_status) {
   await db.create_filters();
   console.log('updated filters');
 }
+
 // start server
-const server = app.listen(CONFIG.port, () => {
-  console.log('Server running on port ' + CONFIG.port);
+let server;
+if (CONFIG.https.enabled) {
+  server = https.createServer({
+    key: readFileSync(CONFIG.https.key),
+    cert: readFileSync(CONFIG.https.cert),
+  }, app);
+} else {
+  server = http.createServer(app);
+}
+server.listen(CONFIG.port, () => {
+  const secure = server instanceof https.Server;
+  console.log(`${secure ? 'HTTPS ' : ''}Server running on port ${CONFIG.port}`);
+  if (!secure) console.log('Warning: Server is not secure (HTTPS disbaled)');
 });
 
 // Instance of http.Server. See: https://expressjs.com/en/4x/api.html#app.listen

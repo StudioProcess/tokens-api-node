@@ -1,5 +1,9 @@
+import { readFileSync } from 'fs';
+import got from 'got';
 import * as util from './util.mjs';
 import * as db from './db.mjs';
+
+const MAIN_CONFIG = JSON.parse(readFileSync('./main.config.json'));
 
 export const _db = {};
 export let _server;
@@ -97,4 +101,19 @@ export async function start_generator() {
 export function stop_generator() {
   console.log('stopping mock generator');
   _generator.stop();
+}
+
+// Version of the got function
+// Uses server url from config - only path is needed
+// Allows self signed certificates
+// Note: Not defined async (no need, since it doesn't use await). Async removes cancel method from returned promise
+export function request(path='', options = {}) {
+  const is_localhost = ['localhost', '127.0.0.1'].includes(MAIN_CONFIG.host);
+  options = Object.assign({
+    https: {
+      rejectUnauthorized: !is_localhost // allow self signed cert locally
+    }
+  }, options);
+  const url = `${MAIN_CONFIG.https.enabled ? 'https' : 'http'}://${MAIN_CONFIG.host}:${MAIN_CONFIG.port}`;
+  return got(url + path, options);
 }

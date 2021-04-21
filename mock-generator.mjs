@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import got from 'got';
 import { random_svg, sleep, timestamp, inspect } from './util.mjs';
+import { request } from './test_util.mjs';
 
 const MAIN_CONFIG = JSON.parse(readFileSync('./main.config.json'));
 export const CONFIG = {
@@ -15,26 +16,17 @@ let should_stop = false;
 let interaction_update_request; // cancelable got promise
 let generator_sleep; // cancelable util.sleep promise
 
-// Note: Not defined async (no need, since it doesn't use await). Async removes cancel method from returned promise
-function request(method='get', path='', options={}) {
-  options = Object.assign({
-    method,
-    responseType: 'json'
-  }, options);
-  return got(`http://${MAIN_CONFIG.host}:${MAIN_CONFIG.port}${path}`, options);
-}
-
-
 // perpetually handle new interactions; fills the queue, notifies of initial queue position
 async function handle_new_interactions() {
-  interaction_update_request = request('get', '/get_new_interaction_updates', {
+  interaction_update_request = request('/get_new_interaction_updates', {
+    responseType: 'json',
     searchParams: {since: seq}
   });
   let res;
   try {
     res = await interaction_update_request;
   } catch (e) {
-    if (e instanceof got.CancelError) return;
+    if (interaction_update_request.isCanceled) return; // exit handler loop when request was canceled
     throw e;
   }
   const int = res.body;
@@ -45,7 +37,8 @@ async function handle_new_interactions() {
   queue.push( int ); // add interaction to queue;
   console.log('new interaction:', int);
   // notify of queue position
-  res = await request('get', '/update_interaction', {
+  res = await request('/update_interaction', {
+    responseType: 'json',
     searchParams: { id: int.id, queue_position: int.queue_position }
   });
   console.log('new interaction queue position notified:', int.queue_position);
@@ -66,7 +59,9 @@ async function generate() {
       keywords: int.keywords,
       svg,
     };
-    const res = await request('put', '/put_token', {
+    const res = await request('/put_token', {
+      responseType: 'json',
+      method: 'put',
       json: token
     });
     const id = res.body.id;
@@ -74,12 +69,14 @@ async function generate() {
     
     // update all queueing interactions
     const updates = [];
-    updates.push(request('get', '/update_interaction', {
+    updates.push(request('/update_interaction', {
+      responseType: 'json',
       searchParams: { id: int.id, queue_position: 0, token_id: id }
     }));
     
     queue.forEach( (int, idx) => {
-      updates.push(request('get', '/update_interaction', {
+      updates.push(request('/update_interaction', {
+        responseType: 'json',
         searchParams: { id: int.id, queue_position: idx + 1 }
       }));
     });

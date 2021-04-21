@@ -1,6 +1,11 @@
 {
   "host": "localhost",
   "port": 3000,
+  "https": {
+    "enabled": true,
+    "key": "cert/localhost.key",
+    "cert": "cert/localhost.crt"
+  },
   "page_limit": 1000,
   "enable_auth": true,
   "jwt_secret": "y2ZHC@KS/KW6Nw;whGVKl-Nc2y/;HpOc",

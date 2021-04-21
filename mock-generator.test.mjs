@@ -1,8 +1,8 @@
 import tap from 'tap';
-import got from 'got';
 import * as db from './db.mjs';
 import * as util from './util.mjs';
 import * as test_util from './test_util.mjs';
+import { request as got } from './test_util.mjs';
 
 let tokens;
 
@@ -27,7 +27,7 @@ tap.teardown(async () => {
 
 
 async function test_queue(t, interaction_id, since=0, queue_pos=null) {
-  let res = await got('http://localhost:3000/get_single_interaction_updates', {
+  let res = await got('/get_single_interaction_updates', {
     responseType: 'json',
     searchParams: { id: interaction_id, since }
   });
@@ -35,7 +35,7 @@ async function test_queue(t, interaction_id, since=0, queue_pos=null) {
   if (queue_pos != null) t.equal(res.body.queue_position, queue_pos, 'queue position');
   if (res.body.queue_position == 0) {
     t.match(res.body.token_id, test_util.match_id, 'token generated');
-    let res2 = await got('http://localhost:3000/get_token', {
+    let res2 = await got('/get_token', {
       responseType: 'json',
       searchParams: { id: res.body.token_id }
     });
@@ -47,11 +47,11 @@ async function test_queue(t, interaction_id, since=0, queue_pos=null) {
 
 tap.test('interaction sequence', async t => {
   // interaction 1
-  const res1 = await got('http://localhost:3000/request_interaction', {
+  const res1 = await got('/request_interaction', {
     responseType: 'json',
   });
   t.match(res1.body, { id: test_util.match_id, color: test_util.match_color }, 'request interaction (1)');
-  const res1x = await got('http://localhost:3000/deposit_interaction', {
+  const res1x = await got('/deposit_interaction', {
     responseType: 'json',
     searchParams: { id: res1.body.id, keywords: 'a,b,c' }
   });
@@ -61,11 +61,11 @@ tap.test('interaction sequence', async t => {
   });
   
   // interaction 2
-  const res2 = await got('http://localhost:3000/request_interaction', {
+  const res2 = await got('/request_interaction', {
     responseType: 'json',
   });
   t.match(res2.body, { id: test_util.match_id, color: test_util.match_color }, 'request interaction (2)');
-  const res2x = await got('http://localhost:3000/deposit_interaction', {
+  const res2x = await got('/deposit_interaction', {
     responseType: 'json',
     searchParams: { id: res2.body.id, keywords: 'd,e,f' }
   });
@@ -75,11 +75,11 @@ tap.test('interaction sequence', async t => {
   });
   
   // interaction 3
-  const res3 = await got('http://localhost:3000/request_interaction', {
+  const res3 = await got('/request_interaction', {
     responseType: 'json',
   });
   t.match(res3.body, { id: test_util.match_id, color: test_util.match_color }, 'request interaction (3)');
-  const res3x = await got('http://localhost:3000/deposit_interaction', {
+  const res3x = await got('/deposit_interaction', {
     responseType: 'json',
     searchParams: { id: res3.body.id, keywords: 'd,e,f' }
   });
