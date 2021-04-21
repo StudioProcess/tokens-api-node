@@ -7,12 +7,14 @@
     "cert": "cert/localhost.crt"
   },
   "page_limit": 1000,
-  "enable_auth": true,
-  "jwt_secret": "y2ZHC@KS/KW6Nw;whGVKl-Nc2y/;HpOc",
-  "subject_issued_at": {
-    "public": 1618911347,
-    "exhibition": 1618911347,
-    "generator": 1618911347,
-    "admin": 1618911347
+  "auth": {
+    "enabled": true,
+    "jwt_secret": "y2ZHC@KS/KW6Nw;whGVKl-Nc2y/;HpOc",
+    "subject_issued_at": {
+      "public": 1618911347,
+      "exhibition": 1618911347,
+      "generator": 1618911347,
+      "admin": 1618911347
+    }
   }
 }

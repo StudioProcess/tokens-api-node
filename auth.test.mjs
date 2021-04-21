@@ -27,10 +27,10 @@ tap.before(async () => {
   };
   // start server
   const main = await test_util.start_server(true); // server with auth enabled
-  main.CONFIG.subject_issued_at.public = 1618911347;
-  main.CONFIG.subject_issued_at.exhibition = 1618911347;
-  main.CONFIG.subject_issued_at.generator = 1618911347;
-  main.CONFIG.subject_issued_at.admin = 1618911347;
+  main.CONFIG.auth.subject_issued_at.public = 1618911347;
+  main.CONFIG.auth.subject_issued_at.exhibition = 1618911347;
+  main.CONFIG.auth.subject_issued_at.generator = 1618911347;
+  main.CONFIG.auth.subject_issued_at.admin = 1618911347;
 });
 
 tap.teardown(async () => {

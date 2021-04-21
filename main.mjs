@@ -12,7 +12,7 @@ export const CONFIG = JSON.parse(readFileSync('./main.config.json'));
 const app = express();
 
 // decode "Authorization: Bearer" on all requests and place a 'user' object on req
-app.use('/', jwt( {secret:CONFIG.jwt_secret, algorithms:['HS256']} ));
+app.use('/', jwt( {secret:CONFIG.auth.jwt_secret, algorithms:['HS256']} ));
 app.use((err, req, res, next) => {
   // allow invalid or missing auth by default
   if (err.name == 'UnauthorizedError') next();
@@ -22,7 +22,7 @@ app.use((err, req, res, next) => {
 function require_sub(...subs) {
   return function (req, res, next) {
     // pass if auth disabled or no subjects are required
-    if (CONFIG.enable_auth === false || subs.length == 0) {
+    if (CONFIG.auth.enabled === false || subs.length == 0) {
       next();
       return;
     }
@@ -38,7 +38,7 @@ function require_sub(...subs) {
     }
     // check if subject isn't expired (issued at or after latest issue date for the role)
     // doesn't apply if no issued_at is defined for a subject
-    if ( req.user.iat < CONFIG.subject_issued_at[req.user.sub] ) {
+    if ( req.user.iat < CONFIG.auth.subject_issued_at[req.user.sub] ) {
       res.status(403).json({'error': 'expired'});
       return;
     }
@@ -277,7 +277,8 @@ if (CONFIG.https.enabled) {
 server.listen(CONFIG.port, () => {
   const secure = server instanceof https.Server;
   console.log(`${secure ? 'HTTPS ' : ''}Server running on port ${CONFIG.port}`);
-  if (!secure) console.log('Warning: Server is not secure (HTTPS disbaled)');
+  if (!secure) console.warn('WARNING: Server is not secure (HTTPS disbaled)');
+  if (!CONFIG.auth.enabled) console.warn('WARNING: Authentication disabled');
 });
 
 // Instance of http.Server. See: https://expressjs.com/en/4x/api.html#app.listen
