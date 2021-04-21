@@ -270,3 +270,32 @@ tap.test('interaction process', async t => {
   t.has(res4, {id, queue_position:0, token_id}, 'received token update');
 });
 
+tap.test('interaction queue size', async t => {
+  let res = await db.interaction_queue_size();
+  t.equal(res, 0);
+  
+  let res1 = await db.request_interaction();
+  res = await db.interaction_queue_size();
+  t.equal(res, 0);
+  
+  let res1x = await db.update_interaction(res1.id, 0);
+  res = await db.interaction_queue_size();
+  t.equal(res, 1);
+  
+  let res2 = await db.request_interaction()
+  let res2x = await db.update_interaction(res2.id, 1);
+  res = await db.interaction_queue_size();
+  t.equal(res, 2);
+  
+  res1x = await db.update_interaction(res1.id, null, 'fake_token_id');
+  res = await db.interaction_queue_size();
+  t.equal(res, 1);
+  
+  res2x = await db.update_interaction(res2.id, 0);
+  res = await db.interaction_queue_size();
+  t.equal(res, 1);
+  
+  res2x = await db.update_interaction(res2.id, null, 'fake_token_id');
+  res = await db.interaction_queue_size();
+  t.equal(res, 0);
+});

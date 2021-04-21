@@ -33,6 +33,8 @@ export async function setup_mock_db() {
   
   console.log('creating filters');
   await db.create_filters();
+  console.log('creating views');
+  await db.create_views();
   
   // create a bunch of token docs
   console.log('creating tokens');

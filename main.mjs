@@ -277,6 +277,12 @@ if (!filter_status) {
   await db.create_filters();
   console.log('updated filters');
 }
+// view check
+const view_status = await db.check_views();
+if (!view_status) {
+  await db.create_views();
+  console.log('updated views');
+}
 
 // start server
 let server;

@@ -14,6 +14,14 @@ const interactions_filters = {
   "updates": "function(doc, req) { return doc._id == req.query.doc_id && (doc.status == 'waiting' || doc.status == 'done'); }"
 };
 
+// views for interactions db
+const interactions_views = {
+  "count_waiting": {
+    "map": "function (doc) { if (doc.status == 'waiting') emit(); }",
+    "reduce": "_count"
+  }
+};
+
 /* 
   databases:
   tokens { _id, generated, keywords, svg, original_png }
@@ -70,6 +78,21 @@ export async function check_filters() {
   }
 }
 
+export async function check_views() {
+  try {
+    const res = await request('get', `/${DB.interactions_db}/_design/views`);
+    const views = res.body.views;
+    if (!views) return false; // views attribute is empty
+    for (let key of Object.keys(interactions_views)) {
+      if (views[key] !== interactions_views[key]) return false;
+    }
+    return true;
+  } catch (e) {
+    if (e.response.statusCode == 404) return false;
+    throw e;
+  }
+}
+
 
 export async function create_db(name) {
   const res = await request('put', `/${name}`);
@@ -99,6 +122,24 @@ export async function create_filters(db_name) {
       _id: "_design/filters",
       _rev: rev,
       filters: interactions_filters
+    }
+  });
+  return res.body;
+}
+
+export async function create_views(db_name) {
+  let rev;
+  
+  try {
+    const res = await request('get', `/${DB.interactions_db}/_design/views`);
+    rev = res.body._rev;
+  } catch (e) { /* nop */ }
+  
+  const res = request('post', `/${DB.interactions_db}`, {
+    json: {
+      _id: "_design/views",
+      _rev: rev,
+      views: interactions_views
     }
   });
   return res.body;
@@ -351,6 +392,14 @@ export async function request_interaction() {
     id: res.body.id,
     color,
   };
+}
+
+// Returns: size
+export async function interaction_queue_size() {
+  const res = await request('get', `/${DB.interactions_db}/_design/views/_view/count_waiting`);
+  const rows = res.body.rows;
+  if (rows.length == 0) return 0;
+  return rows[0].value;
 }
 
 // Returns: ''
