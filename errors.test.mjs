@@ -371,5 +371,34 @@ tap.test('deposit interaction (errors)', async t => {
       body: {error: 'exactly three keywords needed'}
     }, 'not enough keywords (2)');
   }
+});
 
+tap.test('get single interaction updates (errors)', async t => {
+  try {
+    let res = await got('/get_single_interaction_updates', {responseType: 'json', retry: 0, searchParams: {id:''}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'id missing'}
+    }, 'missing id (1)');
+  }
+  try {
+    let res = await got('/get_single_interaction_updates', {responseType: 'json', retry: 0});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'id missing'}
+    }, 'missing id (2)');
+  }
+  try {
+    let res = await got('/get_single_interaction_updates', {responseType: 'json', retry: 0, searchParams: {id: 'xyz'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 404,
+      body: {error: 'not found'}
+    }, 'invalid id');
+  }
 });

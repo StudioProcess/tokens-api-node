@@ -259,7 +259,15 @@ app.get('/deposit_interaction', require_sub('exhibition', 'admin'), async (req, 
 });
 
 app.get('/get_single_interaction_updates', require_sub('exhibition', 'admin'), async (req, res) => {
+  if (!req.query.id) {
+    res.status(400).json({error: 'id missing'});
+    return;
+  }
   try {
+    if ( ! await db.check_interaction(req.query.id) ) {
+      res.status(404).json({error: 'not found'});
+      return;
+    }
     const int = await db.get_single_interaction_updates(req.query.id, req.query.since);
     res.json(int);
   } catch (e) {

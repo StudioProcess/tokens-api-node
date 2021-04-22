@@ -232,7 +232,7 @@ tap.test('check all routes', async t => {
   await check_route('get', '/request_interaction', ['exhibition', 'admin']);
   // TODO: implement errors for these routes before testing access
   await check_route('get', '/deposit_interaction', ['exhibition', 'admin']);
-  // await check_route('get', '/get_single_interaction_updates', ['exhibition', 'admin']);
+  await check_route('get', '/get_single_interaction_updates', ['exhibition', 'admin']);
   await check_route('put', '/put_token', ['generator', 'admin']);
   // await check_route('get', '/get_new_interaction_updates', ['generator', 'admin']);
   // await check_route('get', '/update_interaction', ['generator', 'admin']);
