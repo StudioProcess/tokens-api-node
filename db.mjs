@@ -240,7 +240,7 @@ async function get_tokens_offset_neg(offset=-1, count=1, newest_first=true) {
   return body;
 }
 
-async function get_tokens_from_id(start_id, count=2, newest_first=true) {
+async function get_tokens_from_id(start_id, count=1, newest_first=true) {
   const searchParams = {
     'include_docs': true,
     'limit': count + 1,
@@ -280,7 +280,7 @@ async function get_tokens_from_id(start_id, count=2, newest_first=true) {
   return body;
 }
 
-async function get_tokens_until_id(end_id, count=2, newest_first=true) {
+async function get_tokens_until_id(end_id, count=1, newest_first=true) {
   const searchParams = {
     'include_docs': true,
     'limit': count + 1,

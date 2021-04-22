@@ -85,6 +85,32 @@ tap.test('get token (errors)', async t => {
   }
 });
 
+tap.test('get svg (errors)', async t => {
+  try {
+    await got('/get_svg', {
+      responseType: 'json',
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'id missing'}
+    }, 'no id');
+  }
+  try {
+    await got('/get_svg', {
+      responseType: 'json',
+      searchParams: { id:'doesnt_exist' }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 404,
+      body: {error: 'token not found'}
+    }, 'id doesn\'t exits');
+  }
+});
+
 tap.test('get tokens by offset (errors)', async t => {
   try {
     await got('/get_tokens', {
@@ -162,3 +188,52 @@ tap.test('get tokens by offset (errors)', async t => {
   }, 'going below more');
 });
 
+tap.test('put token (errors)', async t => {
+  try {
+    await got('/put_token', {
+      method: 'put',
+      responseType: 'json'
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'required attribute(s) missing'}
+    }, 'no body');
+  }
+  
+  try {
+    await got('/put_token', {
+      method: 'put',
+      responseType: 'json',
+      json: {
+        svg: 'abc',
+        generated: 'abc'
+      }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'required attribute(s) missing'}
+    }, 'incomplete');
+  }
+  
+  try {
+    await got('/put_token', {
+      method: 'put',
+      responseType: 'json',
+      json: {
+        svg: 'abc',
+        generated: 'abc',
+        keywords: ''
+      }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'required attribute(s) missing'}
+    }, 'attribute empty');
+  }
+});
