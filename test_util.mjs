@@ -82,6 +82,7 @@ export async function start_server(enable_auth=false) {
   console.log('starting server');
   const main = await import('./main.mjs');
   main.CONFIG.auth.enabled = enable_auth;
+  main.CONFIG.queue_limit = 3;
   _server = main.default;
   return main;
 }

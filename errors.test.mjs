@@ -237,3 +237,55 @@ tap.test('put token (errors)', async t => {
     }, 'attribute empty');
   }
 });
+
+tap.test('request interaction (errors)', async t => {
+  // queue limit (3)
+  let res1 = await got('/request_interaction', {responseType: 'json'});
+  t.equal(res1.statusCode, 200);
+  let res1x = await got('/update_interaction', {responseType: 'json', searchParams: {id: res1.body.id, queue_position:0}}); // updates status -> 'waiting'
+  
+  let res2 = await got('/request_interaction', {responseType: 'json'});
+  t.equal(res2.statusCode, 200);
+  let res2x = await got('/update_interaction', {responseType: 'json', searchParams: {id: res2.body.id, queue_position:1}});
+  
+  let res3 = await got('/request_interaction', {responseType: 'json'});
+  t.equal(res3.statusCode, 200);
+  let res3x = await got('/update_interaction', {responseType: 'json', searchParams: {id: res3.body.id, queue_position:2}});
+  
+  try {
+    let res4 = await got('/request_interaction', {responseType: 'json'});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 423,
+      body: {error: 'queue limit reached'}
+    });
+  }
+  
+  // remove one and try again
+  let res5 = await got('/update_interaction', {responseType: 'json', searchParams: {id: res1.body.id, queue_position:0, token_id:'xyz'}});
+  let res6 = await got('/request_interaction', {responseType: 'json'});
+  t.equal(res6.statusCode, 200);
+  
+  // should be able to request a few
+  res6 = await got('/request_interaction', {responseType: 'json'});
+  t.equal(res6.statusCode, 200);
+  res6 = await got('/request_interaction', {responseType: 'json'});
+  t.equal(res6.statusCode, 200);
+  res6 = await got('/request_interaction', {responseType: 'json'});
+  t.equal(res6.statusCode, 200);
+  
+  // complete one (updates status -> new)
+  let res7 = await got('/update_interaction', {responseType: 'json', searchParams: {id: res6.body.id, keywords:'a,b,c'}});
+
+  try {
+    let res8 = await got('/request_interaction', {responseType: 'json'});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 423,
+      body: {error: 'queue limit reached'}
+    });
+  }
+});
+

@@ -217,6 +217,12 @@ app.put('/put_token', require_sub('generator', 'admin'), async (req, res) => {
 
 app.get('/request_interaction', require_sub('exhibition', 'admin'), async (req, res) => {
   try {
+    // check queue size
+    const queue_size = await db.interaction_queue_size();
+    if (queue_size >= CONFIG.queue_limit) {
+      res.status(423).json({error: 'queue limit reached'}); // 423 Locked (WebDAV; RFC 4918)
+      return;
+    }
     const int = await db.request_interaction();
     res.json(int);
   } catch (e) {

@@ -16,8 +16,8 @@ const interactions_design = {
     "updates": "function(doc, req) { return doc._id == req.query.doc_id && (doc.status == 'waiting' || doc.status == 'done'); }"
   },
   "views": {
-    "count_waiting": {
-      "map": "function (doc) { if (doc.status == 'waiting') emit(); }",
+    "queue_size": {
+      "map": "function (doc) { if (doc.status == 'new' | doc.status == 'waiting') emit(); }",
       "reduce": "_count"
     }
   },
@@ -361,7 +361,7 @@ export async function request_interaction() {
 
 // Returns: size
 export async function interaction_queue_size() {
-  const res = await request('get', `/${DB.interactions_db}/_design/tfcc/_view/count_waiting`);
+  const res = await request('get', `/${DB.interactions_db}/_design/tfcc/_view/queue_size`);
   const rows = res.body.rows;
   if (rows.length == 0) return 0;
   return rows[0].value;
