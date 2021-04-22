@@ -31,10 +31,8 @@ export async function setup_mock_db() {
   db.DB.tokens_db = _db.tokens_db;
   db.DB.interactions_db = _db.interactions_db;
   
-  console.log('creating filters');
-  await db.create_filters();
-  console.log('creating views');
-  await db.create_views();
+  console.log('creating design docs');
+  await db.create_design_docs();
   
   // create a bunch of token docs
   console.log('creating tokens');

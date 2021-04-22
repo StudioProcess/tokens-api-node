@@ -271,17 +271,12 @@ if ( Object.values(db_status).some(x => x == false) ) {
   console.error('dbs not ready', db_status);
   process.exit();
 }
-// filter check
-const filter_status = await db.check_filters();
-if (!filter_status) {
-  await db.create_filters();
-  console.log('updated filters');
-}
-// view check
-const view_status = await db.check_views();
-if (!view_status) {
-  await db.create_views();
-  console.log('updated views');
+
+// design docs check (filters and views)
+const design_docs_status = await db.check_design_docs();
+if (!design_docs_status) {
+  await db.create_design_docs();
+  console.log('updated design docs');
 }
 
 // start server

@@ -236,7 +236,7 @@ tap.test('interaction process', async t => {
   let color;
   let token_id = '';
   
-  t.test(async t => {
+  t.test('server side', async t => {
     const res = await db.get_new_interaction_updates();
     t.equal(res.id, id, 'received new interaction update');
     t.same(res.keywords, keywords, 'with correct keywords');

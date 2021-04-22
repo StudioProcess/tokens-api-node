@@ -8,18 +8,20 @@ export const COLORS = JSON.parse(readFileSync(CONFIG.colors_config));
 export const colors = Object.values(COLORS);
 export let color_idx = 0;
 
-// filters for interactions db
-const interactions_filters = {
-  "new": "function(doc, req) { return doc.status == 'new'; }",
-  "updates": "function(doc, req) { return doc._id == req.query.doc_id && (doc.status == 'waiting' || doc.status == 'done'); }"
-};
 
-// views for interactions db
-const interactions_views = {
-  "count_waiting": {
-    "map": "function (doc) { if (doc.status == 'waiting') emit(); }",
-    "reduce": "_count"
-  }
+// design doc for interactions db
+const interactions_design = {
+  "filters": {
+    "new": "function(doc, req) { return doc.status == 'new'; }",
+    "updates": "function(doc, req) { return doc._id == req.query.doc_id && (doc.status == 'waiting' || doc.status == 'done'); }"
+  },
+  "views": {
+    "count_waiting": {
+      "map": "function (doc) { if (doc.status == 'waiting') emit(); }",
+      "reduce": "_count"
+    }
+  },
+  "language": "javascript"
 };
 
 /* 
@@ -63,36 +65,18 @@ export async function check_db(name) {
   }
 }
 
-export async function check_filters() {
+export async function check_design_docs() {
   try {
-    const res = await request('get', `/${DB.interactions_db}/_design/filters`);
-    const filters = res.body.filters;
-    if (!filters) return false; // filters attribute is empty
-    for (let key of Object.keys(interactions_filters)) {
-      if (filters[key] !== interactions_filters[key]) return false;
-    }
-    return true;
+    const res = await request('get', `/${DB.interactions_db}/_design/tfcc`);
+    const ddoc = res.body;
+    delete ddoc._id;
+    delete ddoc._rev;
+    return JSON.stringify(ddoc) == JSON.stringify(interactions_design);
   } catch (e) {
     if (e.response.statusCode == 404) return false;
     throw e;
   }
 }
-
-export async function check_views() {
-  try {
-    const res = await request('get', `/${DB.interactions_db}/_design/views`);
-    const views = res.body.views;
-    if (!views) return false; // views attribute is empty
-    for (let key of Object.keys(interactions_views)) {
-      if (views[key] !== interactions_views[key]) return false;
-    }
-    return true;
-  } catch (e) {
-    if (e.response.statusCode == 404) return false;
-    throw e;
-  }
-}
-
 
 export async function create_db(name) {
   const res = await request('put', `/${name}`);
@@ -109,38 +93,19 @@ export async function all_dbs(name) {
   return res.body;
 }
 
-export async function create_filters(db_name) {
+export async function create_design_docs() {
+  // get revision (in case design doc already exists)
   let rev;
-  
   try {
-    const res = await request('get', `/${DB.interactions_db}/_design/filters`);
+    const res = await request('get', `/${DB.interactions_db}/_design/tfcc`);
     rev = res.body._rev;
   } catch (e) { /* nop */ }
   
   const res = request('post', `/${DB.interactions_db}`, {
-    json: {
-      _id: "_design/filters",
+    json: Object.assign({
+      _id: "_design/tfcc",
       _rev: rev,
-      filters: interactions_filters
-    }
-  });
-  return res.body;
-}
-
-export async function create_views(db_name) {
-  let rev;
-  
-  try {
-    const res = await request('get', `/${DB.interactions_db}/_design/views`);
-    rev = res.body._rev;
-  } catch (e) { /* nop */ }
-  
-  const res = request('post', `/${DB.interactions_db}`, {
-    json: {
-      _id: "_design/views",
-      _rev: rev,
-      views: interactions_views
-    }
+    }, interactions_design)
   });
   return res.body;
 }
@@ -396,7 +361,7 @@ export async function request_interaction() {
 
 // Returns: size
 export async function interaction_queue_size() {
-  const res = await request('get', `/${DB.interactions_db}/_design/views/_view/count_waiting`);
+  const res = await request('get', `/${DB.interactions_db}/_design/tfcc/_view/count_waiting`);
   const rows = res.body.rows;
   if (rows.length == 0) return 0;
   return rows[0].value;
@@ -417,7 +382,7 @@ export async function get_single_interaction_updates(id, since=0) {
   const res = await request('get', `/${DB.interactions_db}/_changes`, {
     searchParams: {
       feed: 'longpoll',
-      filter: 'filters/updates',
+      filter: 'tfcc/updates',
       doc_id: id,
       include_docs: true,
       since,
@@ -454,7 +419,7 @@ export async function get_new_interaction_updates(since=0) {
   const res = await request('get', `/${DB.interactions_db}/_changes`, {
     searchParams: {
       feed: 'longpoll',
-      filter: 'filters/new',
+      filter: 'tfcc/new',
       include_docs: true,
       since,
     }
