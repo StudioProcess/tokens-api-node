@@ -369,7 +369,13 @@ export async function interaction_queue_size() {
 
 // Returns: ''
 export async function deposit_interaction(id, keywords) {
-  let res = await request('get', `/${DB.interactions_db}/${id}`);
+  let res;
+  try {
+    res = await request('get', `/${DB.interactions_db}/${id}`);
+  } catch (e) {
+    if (e.response.statusCode == 404) throw {error: 'not found'};
+    throw e;
+  }
   let int = res.body;
   int.status = 'new';
   int.keywords = keywords;

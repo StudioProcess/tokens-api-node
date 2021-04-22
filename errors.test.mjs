@@ -289,3 +289,87 @@ tap.test('request interaction (errors)', async t => {
   }
 });
 
+tap.test('deposit interaction (errors)', async t => {
+  try {
+    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'invalid', keywords:'a,b,c'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 404,
+      body: {error: 'not found'}
+    }, 'invalid id');
+  }
+  try {
+    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'', keywords:'a,b,c'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'id missing'}
+    }, 'missing id (1)');
+  }
+  try {
+    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {keywords:'a,b,c'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'id missing'}
+    }, 'missing id (2)');
+  }
+  try {
+    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'id missing'}
+    }, 'missing id (3)');
+  }
+  try {
+    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {keywords:'', id:'xyz'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'keywords missing'}
+    }, 'missing keywords (1)');
+  }
+  try {
+    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'keywords missing'}
+    }, 'missing keywords (2)');
+  }
+  try {
+    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', keywords:'one'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'exactly three keywords needed'}
+    }, 'not enough keywords (1)');
+  }
+  try {
+    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', keywords:'one,two'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'exactly three keywords needed'}
+    }, 'not enough keywords (2)');
+  }
+  try {
+    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', keywords:'one,two,three,four'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'exactly three keywords needed'}
+    }, 'not enough keywords (2)');
+  }
+
+});

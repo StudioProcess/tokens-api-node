@@ -201,7 +201,7 @@ app.put('/put_token', require_sub('generator', 'admin'), async (req, res) => {
     const token = req.body;
     // check required attributes: svg, generated, keywords
     if (!token.svg || !token.generated || !token.keywords) {
-      res.status(400).json({error: 'required attribute(s) missing'})
+      res.status(400).json({error: 'required attribute(s) missing'});
       return;
     }
     const result = await db.put_token(req.body);
@@ -231,14 +231,29 @@ app.get('/request_interaction', require_sub('exhibition', 'admin'), async (req, 
 });
 
 app.get('/deposit_interaction', require_sub('exhibition', 'admin'), async (req, res) => {
+  if (!req.query.id) {
+    res.status(400).json({error: 'id missing'});
+    return;
+  }
+  if (!req.query.keywords) {
+    res.status(400).json({error: 'keywords missing'});
+    return;
+  }
   try {
     let keywords = req.query.keywords;
     keywords = keywords.toLowerCase();
-    keywords = keywords.split(/[\.,;/]/, 3);
+    keywords = keywords.split(/[\.,;/]/);
+    if (keywords.length != 3) {
+      res.status(400).json({error: 'exactly three keywords needed'});
+      return;
+    }
     await db.deposit_interaction(req.query.id, keywords);
     res.end();
   } catch (e) {
-    console.log(e);
+    if (e.error == 'not found') {
+      res.status(404).json(e);
+      return;
+    }
     other_error(res, e);
   }
 });
