@@ -263,7 +263,7 @@ tap.test('request interaction (errors)', async t => {
   }
   
   // remove one and try again
-  let res5 = await got('/update_interaction', {responseType: 'json', searchParams: {id: res1.body.id, queue_position:0, token_id:'xyz'}});
+  let res5 = await got('/update_interaction', {responseType: 'json', searchParams: {id: res1.body.id, queue_position:0, token_id:tokens[0].id}});
   let res6 = await got('/request_interaction', {responseType: 'json'});
   t.equal(res6.statusCode, 200);
   
@@ -276,7 +276,7 @@ tap.test('request interaction (errors)', async t => {
   t.equal(res6.statusCode, 200);
   
   // complete one (updates status -> new)
-  let res7 = await got('/update_interaction', {responseType: 'json', searchParams: {id: res6.body.id, keywords:'a,b,c'}});
+  let res7 = await got('/deposit_interaction', {responseType: 'json', searchParams: {id: res6.body.id, keywords:'a,b,c'}});
 
   try {
     let res8 = await got('/request_interaction', {responseType: 'json'});
@@ -405,4 +405,92 @@ tap.test('get single interaction updates (errors)', async t => {
 
 tap.test('get new interaction updates (errors)', async t => {
   t.pass('has no error conditions');
+});
+
+tap.test('update interaction (errors)', async t => {
+  try {
+    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:''}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'id missing'}
+    }, 'missing id (1)');
+  }
+  try {
+    let res = await got('/update_interaction', {responseType: 'json', retry: 0});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'id missing'}
+    }, 'missing id (2)');
+  }
+  try {
+    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'queue_position or token_id required'}
+    }, 'missing params');
+  }
+  try {
+    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', queue_position:-1}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'invalid queue_position'}
+    }, 'negative queue position');
+  }
+  try {
+    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', queue_position:''}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'queue_position or token_id required'}
+    }, 'empty queue position');
+  }
+  try {
+    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', queue_position:'', token_id:'abc'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 404,
+      body: {error: 'interaction not found'}
+    }, 'empty queue position but token given');
+  }
+  try {
+    let int = await db.request_interaction();
+    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:int.id, queue_position:'', token_id:'abc'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 404,
+      body: {error: 'token not found'}
+    }, 'invalid token');
+  }
+  try {
+    let int = await db.request_interaction();
+    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:int.id, token_id:'abc'}});
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 404,
+      body: {error: 'token not found'}
+    }, 'invalid token (no queue position)');
+  }
+
+  
+  // try {
+  //   let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', queue_position:0}});
+  //   t.fail('should throw');
+  // } catch (e) {
+  //   t.match(e.response, {
+  //     statusCode: 404,
+  //     body: {error: 'interaction not found'}
+  //   }, 'invalid interaction id');
+  // }
 });

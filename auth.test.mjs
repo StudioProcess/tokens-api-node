@@ -239,5 +239,5 @@ tap.test('check all routes', async t => {
   
   await check_route('put', '/put_token', ['generator', 'admin']);
   await check_route('get', '/get_new_interaction_updates', ['generator', 'admin']);
-  // await check_route('get', '/update_interaction', ['generator', 'admin']);
+  await check_route('get', '/update_interaction', ['generator', 'admin']);
 });

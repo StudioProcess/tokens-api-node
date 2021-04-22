@@ -63,6 +63,8 @@ function require_sub(...subs) {
 
 // middleware to parse query values (numbers or boolean)
 function parse_query_val(str) {
+  if (str === '') return str; // special case for empty string, because Number('') -> 0
+  
   // integer
   let val = Number(str);
   if ( !isNaN(val) && val != Infinity ) {
@@ -285,7 +287,28 @@ app.get('/get_new_interaction_updates', require_sub('generator', 'admin'), async
 });
 
 app.get('/update_interaction', require_sub('generator', 'admin'), async (req, res) => {
+  if (!req.query.id) {
+    res.status(400).json({error: 'id missing'});
+    return;
+  }
+  // Note: 0 == '' -> true, so using === to compare with ''
+  if ((req.query.queue_position === undefined || req.query.queue_position === '') && !req.query.token_id) {
+    res.status(400).json({error: 'queue_position or token_id required'});
+    return;
+  }
+  if (req.query.queue_position < 0) {
+    res.status(400).json({error: 'invalid queue_position'});
+    return;
+  }
   try {
+    if ( ! await db.check_interaction(req.query.id) ) {
+      res.status(404).json({error: 'interaction not found'});
+      return;
+    }
+    if ( req.query.token_id && ! await db.check_token(req.query.token_id) ) {
+      res.status(404).json({error: 'token not found'});
+      return;
+    }
     const int = await db.update_interaction(req.query.id, req.query.queue_position, req.query.token_id);
     res.end();
   } catch (e) {

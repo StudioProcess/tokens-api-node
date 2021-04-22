@@ -238,7 +238,7 @@ tap.test('interaction sequence', async t => {
   });
   t.match(res.body, { id: test_util.match_id, color: test_util.match_color });
   
-  const new_token_id = util.rnd_hash(32);
+  const new_token_id = tokens[0].id; // need to use existing token id
   
   // server
   t.test(async t => {

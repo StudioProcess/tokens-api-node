@@ -360,6 +360,17 @@ export async function request_interaction() {
 }
 
 // Returns: true|false
+export async function check_token(id) {
+  try {
+    const res = await request('head', `/${DB.tokens_db}/${id}`);
+    return res.statusCode == 200;
+  } catch (e) {
+    if (e.response.statusCode == 404) return false;
+    throw e;
+  }
+}
+
+// Returns: true|false
 export async function check_interaction(id) {
   try {
     const res = await request('head', `/${DB.interactions_db}/${id}`);
