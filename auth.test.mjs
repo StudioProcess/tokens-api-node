@@ -224,16 +224,20 @@ tap.test('check all routes', async t => {
     }
   }
   
+  // make a new interction for get_new_interaction_updates (otherwise the request waits)
+  let int = await db.request_interaction();
+  await db.deposit_interaction(int.id, ['a', 'b', 'c']);
+  
   await check_route('get', '/get_token', ['public', 'admin']);
   await check_route('get', '/get_tokens', ['public', 'admin']);
   
   await check_route('get', '/get_svg', ['public', 'exhibition', 'generator', 'admin', 'nosub']);
   
   await check_route('get', '/request_interaction', ['exhibition', 'admin']);
-  // TODO: implement errors for these routes before testing access
   await check_route('get', '/deposit_interaction', ['exhibition', 'admin']);
   await check_route('get', '/get_single_interaction_updates', ['exhibition', 'admin']);
+  
   await check_route('put', '/put_token', ['generator', 'admin']);
-  // await check_route('get', '/get_new_interaction_updates', ['generator', 'admin']);
+  await check_route('get', '/get_new_interaction_updates', ['generator', 'admin']);
   // await check_route('get', '/update_interaction', ['generator', 'admin']);
 });

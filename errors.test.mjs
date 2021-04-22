@@ -402,3 +402,7 @@ tap.test('get single interaction updates (errors)', async t => {
     }, 'invalid id');
   }
 });
+
+tap.test('get new interaction updates (errors)', async t => {
+  t.pass('has no error conditions');
+});
