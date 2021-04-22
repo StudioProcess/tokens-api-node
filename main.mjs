@@ -7,7 +7,7 @@ import jwt from 'express-jwt';
 import * as db from './db.mjs';
 import { log_req, pick } from './util.mjs';
 
-export const CONFIG = JSON.parse(readFileSync('./main.config.json'));
+export const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 const JWT_SECRET = process.env.JWT_SECRET || readFileSync(CONFIG.auth.jwt_secret, {encoding:'utf8'}).trim();
 
 const app = express();

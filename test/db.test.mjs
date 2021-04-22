@@ -1,7 +1,7 @@
 import tap from 'tap';
-import * as db from './db.mjs';
-import * as util from './util.mjs';
-import * as test_util from './test_util.mjs';
+import * as db from '../db.mjs';
+import * as util from '../util.mjs';
+import * as test_util from '../test_util.mjs';
 
 let tokens = [];  
 

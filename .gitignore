@@ -3,5 +3,7 @@ node_modules
 venv
 .venv
 .nyc_output
-db.config.json
-auth.secret
+
+# secret config
+# db.config.json
+# auth.secret

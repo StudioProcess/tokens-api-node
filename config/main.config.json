@@ -6,13 +6,13 @@
     "key": "./cert/localhost.key",
     "cert": "./cert/localhost.crt"
   },
-  "db_config": "./db.config.json",
-  "colors_config": "./colors.config.json",
+  "db_config": "./config/db.config.json",
+  "colors_config": "./config/colors.config.json",
   "page_limit": 1000,
   "queue_limit": 10,
   "auth": {
     "enabled": true,
-    "jwt_secret": "./auth.secret",
+    "jwt_secret": "./config/auth.secret",
     "subject_issued_at": {
       "public": 1618911347,
       "exhibition": 1618911347,

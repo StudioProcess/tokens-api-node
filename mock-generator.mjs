@@ -3,7 +3,7 @@ import got from 'got';
 import { random_svg, sleep, timestamp, inspect } from './util.mjs';
 import { request } from './test_util.mjs';
 
-const MAIN_CONFIG = JSON.parse(readFileSync('./main.config.json'));
+const MAIN_CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 export const CONFIG = {
   loop_time: 500, // when queue is empty
   display_time: 15000

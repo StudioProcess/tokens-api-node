@@ -3,7 +3,7 @@ import got from 'got';
 import * as util from './util.mjs';
 import * as db from './db.mjs';
 
-const MAIN_CONFIG = JSON.parse(readFileSync('./main.config.json'));
+const MAIN_CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 
 export const _db = {};
 export let _server;

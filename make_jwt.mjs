@@ -6,7 +6,7 @@ import url from 'url';
 import jwt from 'jsonwebtoken';
 import { unix_seconds } from './util.mjs';
 
-const CONFIG = JSON.parse(readFileSync('./main.config.json'));
+const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 const JWT_SECRET = process.env.JWT_SECRET || readFileSync(CONFIG.auth.jwt_secret, {encoding:'utf8'}).trim();
 
 function to_unix_seconds(date_str) {
