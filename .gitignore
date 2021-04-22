@@ -5,5 +5,5 @@ venv
 .nyc_output
 
 # secret config
-# db.config.json
-# auth.secret
+config/db.config.json
+config/auth.secret
