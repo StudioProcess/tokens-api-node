@@ -27,7 +27,7 @@ tap.teardown(async () => {
 
 
 async function test_queue(t, interaction_id, since=0, queue_pos=null) {
-  let res = await got('/get_single_interaction_updates', {
+  let res = await got('/interaction_updates', {
     responseType: 'json',
     searchParams: { id: interaction_id, since }
   });
@@ -35,7 +35,7 @@ async function test_queue(t, interaction_id, since=0, queue_pos=null) {
   if (queue_pos != null) t.equal(res.body.queue_position, queue_pos, 'queue position');
   if (res.body.queue_position == 0) {
     t.match(res.body.token_id, test_util.match_id, 'token generated');
-    let res2 = await got('/get_token', {
+    let res2 = await got('/token', {
       responseType: 'json',
       searchParams: { id: res.body.token_id }
     });
@@ -59,7 +59,7 @@ tap.test('interaction sequence', async t => {
   t.test(async t => {
     await test_queue(t, res1.body.id);
   });
-  
+
   // interaction 2
   const res2 = await got('/request_interaction', {
     responseType: 'json',
@@ -73,7 +73,7 @@ tap.test('interaction sequence', async t => {
   t.test(async t => {
     await test_queue(t, res2.body.id);
   });
-  
+
   // interaction 3
   const res3 = await got('/request_interaction', {
     responseType: 'json',

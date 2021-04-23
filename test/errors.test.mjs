@@ -28,7 +28,7 @@ tap.test('get token (errors)', async t => {
   const url_save = db.DB.url;
   db.DB.url = 'http://localhost:9999';
   try {
-    await got('/get_token', {
+    await got('/token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id },
       retry: 0
@@ -44,7 +44,7 @@ tap.test('get token (errors)', async t => {
   
   // no id
   try {
-    await got('/get_token', {
+    await got('/token', {
       responseType: 'json',
     });
     t.fail('should throw');
@@ -57,7 +57,7 @@ tap.test('get token (errors)', async t => {
   
   // empty id
   try {
-    await got('/get_token', {
+    await got('/token', {
       responseType: 'json',
       searchParams: { id: '' }
     });
@@ -71,7 +71,7 @@ tap.test('get token (errors)', async t => {
   
   // invalid id
   try {
-    await got('/get_token', {
+    await got('/token', {
       responseType: 'json',
       retry: 0,
       searchParams: { id: 'abcdef' }
@@ -87,7 +87,7 @@ tap.test('get token (errors)', async t => {
 
 tap.test('get svg (errors)', async t => {
   try {
-    await got('/get_svg', {
+    await got('/svg', {
       responseType: 'json',
     });
     t.fail('should throw');
@@ -98,7 +98,7 @@ tap.test('get svg (errors)', async t => {
     }, 'no id');
   }
   try {
-    await got('/get_svg', {
+    await got('/svg', {
       responseType: 'json',
       searchParams: { id:'doesnt_exist' }
     });
@@ -113,7 +113,7 @@ tap.test('get svg (errors)', async t => {
 
 tap.test('get tokens by offset (errors)', async t => {
   try {
-    await got('/get_tokens', {
+    await got('/tokens', {
       responseType: 'json',
       searchParams: {}
     });
@@ -126,7 +126,7 @@ tap.test('get tokens by offset (errors)', async t => {
   }
   
   try {
-    await got('/get_tokens', {
+    await got('/tokens', {
       responseType: 'json',
       searchParams: { offset:0, count:0 }
     });
@@ -139,7 +139,7 @@ tap.test('get tokens by offset (errors)', async t => {
   }
   
   try {
-    await got('/get_tokens', {
+    await got('/tokens', {
       responseType: 'json',
       searchParams: { offset:0, count:999999 }
     });
@@ -151,7 +151,7 @@ tap.test('get tokens by offset (errors)', async t => {
     }, 'count too big');
   }
   
-  let res = await got('/get_tokens', {
+  let res = await got('/tokens', {
     responseType: 'json',
     searchParams: { offset:10, count:1 }
   });
@@ -160,7 +160,7 @@ tap.test('get tokens by offset (errors)', async t => {
     body: { offset:10, rows: [], prev: tokens[9].id, next: null }
   }, 'going one over');
   
-  res = await got('/get_tokens', {
+  res = await got('/tokens', {
     responseType: 'json',
     searchParams: { offset:99, count:1 }
   });
@@ -169,7 +169,7 @@ tap.test('get tokens by offset (errors)', async t => {
     body: { offset:99, rows: [], prev: null, next: null }
   }, 'going over more');
   
-  res = await got('/get_tokens', {
+  res = await got('/tokens', {
     responseType: 'json',
     searchParams: { offset:-11, count:1 }
   });
@@ -178,7 +178,7 @@ tap.test('get tokens by offset (errors)', async t => {
     body: { offset:-11, rows: [], prev: null, next: tokens[0].id }
   }, 'going one below');
   
-  res = await got('/get_tokens', {
+  res = await got('/tokens', {
     responseType: 'json',
     searchParams: { offset:-99, count:1 }
   });
@@ -190,7 +190,7 @@ tap.test('get tokens by offset (errors)', async t => {
 
 tap.test('put token (errors)', async t => {
   try {
-    await got('/put_token', {
+    await got('/token', {
       method: 'put',
       responseType: 'json'
     });
@@ -203,7 +203,7 @@ tap.test('put token (errors)', async t => {
   }
   
   try {
-    await got('/put_token', {
+    await got('/token', {
       method: 'put',
       responseType: 'json',
       json: {
@@ -220,7 +220,7 @@ tap.test('put token (errors)', async t => {
   }
   
   try {
-    await got('/put_token', {
+    await got('/token', {
       method: 'put',
       responseType: 'json',
       json: {
@@ -375,7 +375,7 @@ tap.test('deposit interaction (errors)', async t => {
 
 tap.test('get single interaction updates (errors)', async t => {
   try {
-    let res = await got('/get_single_interaction_updates', {responseType: 'json', retry: 0, searchParams: {id:''}});
+    let res = await got('/interaction_updates', {responseType: 'json', retry: 0, searchParams: {id:''}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -384,7 +384,7 @@ tap.test('get single interaction updates (errors)', async t => {
     }, 'missing id (1)');
   }
   try {
-    let res = await got('/get_single_interaction_updates', {responseType: 'json', retry: 0});
+    let res = await got('/interaction_updates', {responseType: 'json', retry: 0});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -393,7 +393,7 @@ tap.test('get single interaction updates (errors)', async t => {
     }, 'missing id (2)');
   }
   try {
-    let res = await got('/get_single_interaction_updates', {responseType: 'json', retry: 0, searchParams: {id: 'xyz'}});
+    let res = await got('/interaction_updates', {responseType: 'json', retry: 0, searchParams: {id: 'xyz'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {

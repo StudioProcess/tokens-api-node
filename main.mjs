@@ -121,7 +121,7 @@ function other_error(res, e) {
 }
 
 
-app.get('/get_token', require_sub('public', 'admin'), async (req, res) => {
+app.get('/token', require_sub('public', 'admin'), async (req, res) => {
   // no id (null, undefined, '')
   if (!req.query.id) {
     res.status(400).json({error: 'id missing'});
@@ -141,7 +141,7 @@ app.get('/get_token', require_sub('public', 'admin'), async (req, res) => {
   }
 });
 
-app.get('/get_svg', async (req, res) => {
+app.get('/svg', async (req, res) => {
   // no id (null, undefined, '')
   if (!req.query.id) {
     res.status(400).json({error: 'id missing'});
@@ -167,7 +167,7 @@ app.get('/get_svg', async (req, res) => {
   }
 });
 
-app.get('/get_tokens', require_sub('public', 'admin'), async (req, res) => {
+app.get('/tokens', require_sub('public', 'admin'), async (req, res) => {
   if (req.query.offset == undefined && req.query.start_id == undefined && req.query.end_id == undefined) {
     res.status(400).json({error: 'need offset, start_id or end_id'});
     return;
@@ -197,8 +197,8 @@ app.get('/get_tokens', require_sub('public', 'admin'), async (req, res) => {
 });
 
 
-app.use('/put_token', express.json()); // activate json body parsing
-app.put('/put_token', require_sub('generator', 'admin'), async (req, res) => {
+// Note: express.json() activates json body parsing
+app.put('/token', express.json(), require_sub('generator', 'admin'), async (req, res) => {
   try {
     const token = req.body;
     // check required attributes: svg, generated, keywords
@@ -213,7 +213,10 @@ app.put('/put_token', require_sub('generator', 'admin'), async (req, res) => {
   }
 });
 
-// app.get('/delete_token', async (req, res) => {
+// app.delete('/token', async (req, res) => {
+// });
+
+// app.delete('/tokens', async (req, res) => {
 // });
 
 
@@ -260,7 +263,7 @@ app.get('/deposit_interaction', require_sub('exhibition', 'admin'), async (req, 
   }
 });
 
-app.get('/get_single_interaction_updates', require_sub('exhibition', 'admin'), async (req, res) => {
+app.get('/interaction_updates', require_sub('exhibition', 'admin'), async (req, res) => {
   if (!req.query.id) {
     res.status(400).json({error: 'id missing'});
     return;
@@ -277,7 +280,7 @@ app.get('/get_single_interaction_updates', require_sub('exhibition', 'admin'), a
   }
 });
 
-app.get('/get_new_interaction_updates', require_sub('generator', 'admin'), async (req, res) => {
+app.get('/new_interaction_updates', require_sub('generator', 'admin'), async (req, res) => {
   try {
     const int = await db.get_new_interaction_updates(req.query.since);
     res.json(int);

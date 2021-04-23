@@ -18,7 +18,7 @@ let generator_sleep; // cancelable util.sleep promise
 
 // perpetually handle new interactions; fills the queue, notifies of initial queue position
 async function handle_new_interactions() {
-  interaction_update_request = request('/get_new_interaction_updates', {
+  interaction_update_request = request('/new_interaction_updates', {
     responseType: 'json',
     searchParams: {since: seq}
   });
@@ -59,7 +59,7 @@ async function generate() {
       keywords: int.keywords,
       svg,
     };
-    const res = await request('/put_token', {
+    const res = await request('/token', {
       responseType: 'json',
       method: 'put',
       json: token

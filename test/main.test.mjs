@@ -24,7 +24,7 @@ tap.teardown(async () => {
 
 
 tap.test('get token', async t => {
-  let res = await got('/get_token', {
+  let res = await got('/token', {
     responseType: 'json',
     searchParams: { id: tokens[0].id }
   });
@@ -32,13 +32,13 @@ tap.test('get token', async t => {
 });
 
 tap.test('get svg', async t => {
-  let res = await got('/get_svg', {
+  let res = await got('/svg', {
     searchParams: { id: tokens[0].id }
   });
   t.same(res.body, tokens[0].svg, 'got svg text');
   t.match(res.headers, {'content-type': 'image/svg+xml; charset=utf-8'}, 'headers')
   
-  res = await got('/get_svg', {
+  res = await got('/svg', {
     searchParams: { id: tokens[1].id, download:true }
   });
   t.same(res.body, tokens[1].svg, 'got svg text');
@@ -54,7 +54,7 @@ tap.test('put token', async t => {
     generated: util.timestamp(),
     keywords: ['x', 'y', 'z']
   };
-  let res = await got('/put_token', {
+  let res = await got('/token', {
     method: 'put',
     responseType: 'json',
     json: token
@@ -70,7 +70,7 @@ tap.test('put token', async t => {
 
 
 tap.test('get tokens (offset)', async t => {
-  let res = await got('/get_tokens', {
+  let res = await got('/tokens', {
     responseType: 'json',
     searchParams: { offset:0, count:1 }
   });
@@ -81,7 +81,7 @@ tap.test('get tokens (offset)', async t => {
   t.same(res.body.next, tokens[1].id);
   t.same(res.body.newest_first, true);
   
-  res = await got('/get_tokens', {
+  res = await got('/tokens', {
     responseType: 'json',
     searchParams: { offset:1, count:2 }
   });
@@ -93,7 +93,7 @@ tap.test('get tokens (offset)', async t => {
   t.same(res.body.next, tokens[3].id);
   t.same(res.body.newest_first, true);
   
-  res = await got('/get_tokens', {
+  res = await got('/tokens', {
     responseType: 'json',
     searchParams: { offset:tokens.length-1, count:1 }
   });
@@ -106,7 +106,7 @@ tap.test('get tokens (offset)', async t => {
 });
 
 tap.test('get tokens (negative offset)', async t => {
-  let res = await got('/get_tokens', {
+  let res = await got('/tokens', {
     responseType: 'json',
     searchParams: { offset:-1, count:1 }
   });
@@ -119,7 +119,7 @@ tap.test('get tokens (negative offset)', async t => {
     newest_first: true
   });
   
-  res = await got('/get_tokens', {
+  res = await got('/tokens', {
     responseType: 'json',
     searchParams: { offset:-5, count:3 }
   });
@@ -132,7 +132,7 @@ tap.test('get tokens (negative offset)', async t => {
     newest_first: true
   });
   
-  res = await got('/get_tokens', {
+  res = await got('/tokens', {
     responseType: 'json',
     searchParams: { offset:-10, count:2 }
   });
@@ -147,7 +147,7 @@ tap.test('get tokens (negative offset)', async t => {
 });
 
 tap.test('get tokens (from id)', async t => {
-  let res = await got('/get_tokens', {
+  let res = await got('/tokens', {
     responseType: 'json',
     searchParams: { start_id:tokens[0].id, count:1 }
   });
@@ -158,7 +158,7 @@ tap.test('get tokens (from id)', async t => {
   t.same(res.body.next, tokens[1].id);
   t.same(res.body.newest_first, true);
   
-  res = await got('/get_tokens', {
+  res = await got('/tokens', {
     responseType: 'json',
     searchParams: { start_id:tokens[4].id, count:3 }
   });
@@ -171,7 +171,7 @@ tap.test('get tokens (from id)', async t => {
   t.same(res.body.next, tokens[7].id);
   t.same(res.body.newest_first, true);
   
-  res = await got('/get_tokens', {
+  res = await got('/tokens', {
     responseType: 'json',
     searchParams: { start_id:tokens[8].id, count:10 }
   });
@@ -185,7 +185,7 @@ tap.test('get tokens (from id)', async t => {
 });
 
 tap.test('get tokens (until id)', async t => {
-  let res = await got('/get_tokens', {
+  let res = await got('/tokens', {
     responseType: 'json',
     searchParams: { end_id:tokens[tokens.length-1].id, count:3 }
   });
@@ -198,7 +198,7 @@ tap.test('get tokens (until id)', async t => {
   t.same(res.body.next, null);
   t.same(res.body.newest_first, true);
   
-  res = await got('/get_tokens', {
+  res = await got('/tokens', {
     responseType: 'json',
     searchParams: { end_id:tokens[5].id, count:2 }
   });
@@ -242,7 +242,7 @@ tap.test('interaction sequence', async t => {
   
   // server
   t.test(async t => {
-    let res2 = await got('/get_new_interaction_updates', {
+    let res2 = await got('/new_interaction_updates', {
       responseType: 'json',
     });
     t.match(res2.body, res.body);
@@ -291,25 +291,25 @@ tap.test('interaction sequence', async t => {
   t.equal(res4.body, '', 'no response data');
   
   // receive queue updates
-  let res5 = await got('/get_single_interaction_updates', {
+  let res5 = await got('/interaction_updates', {
     responseType: 'json',
     searchParams: { id: res.body.id }
   });
   t.match(res5.body, {id: res.body.id, queue_position: 3, token_id: null});
   
-  res5 = await got('/get_single_interaction_updates', {
+  res5 = await got('/interaction_updates', {
     responseType: 'json',
     searchParams: { id: res.body.id, since: res5.body.seq }
   });
   t.match(res5.body, {id: res.body.id, queue_position: 2, token_id: null});
   
-  res5 = await got('/get_single_interaction_updates', {
+  res5 = await got('/interaction_updates', {
     responseType: 'json',
     searchParams: { id: res.body.id, since: res5.body.seq }
   });
   t.match(res5.body, {id: res.body.id, queue_position: 1, token_id: null});
   
-  res5 = await got('/get_single_interaction_updates', {
+  res5 = await got('/interaction_updates', {
     responseType: 'json',
     searchParams: { id: res.body.id, since: res5.body.seq }
   });

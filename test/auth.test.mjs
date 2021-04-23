@@ -51,14 +51,14 @@ tap.test('auth enabled', async t => {
 });
 
 tap.test('get token', async t => {
-  let res = await got('/get_token', {
+  let res = await got('/token', {
     responseType: 'json',
     searchParams: { id: tokens[0].id },
     headers: { 'Authorization': 'Bearer ' + jwt.public }
   });
   t.equal(res.statusCode, 200, 'valid auth');
   
-  res = await got('/get_token', {
+  res = await got('/token', {
     responseType: 'json',
     searchParams: { id: tokens[0].id },
     headers: { 'Authorization': 'Bearer ' + jwt.admin }
@@ -66,7 +66,7 @@ tap.test('get token', async t => {
   t.equal(res.statusCode, 200, 'valid auth (other valid subject)');
   
   try {
-    let res = await got('/get_token', {
+    let res = await got('/token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id }
     });
@@ -79,7 +79,7 @@ tap.test('get token', async t => {
   }
   
   try {
-    let res = await got('/get_token', {
+    let res = await got('/token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id },
       headers: { 'Authorization': 'Bearer ' + jwt.exhibition }
@@ -93,7 +93,7 @@ tap.test('get token', async t => {
   }
   
   try {
-    let res = await got('/get_token', {
+    let res = await got('/token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id },
       headers: { 'Authorization': 'Bearer ' + jwt.public_invalid }
@@ -107,7 +107,7 @@ tap.test('get token', async t => {
   }
   
   try {
-    let res = await got('/get_token', {
+    let res = await got('/token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id },
       headers: { 'Authorization': 'Bearer ' + jwt.garbage }
@@ -121,7 +121,7 @@ tap.test('get token', async t => {
   }
   
   try {
-    let res = await got('/get_token', {
+    let res = await got('/token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id },
       headers: { 'Authorization': 'Bearer ' + jwt.public_expired }
@@ -170,24 +170,24 @@ tap.test('request_interaction', async t => {
 });
 
 tap.test('no auth needed', async t => {
-  let res = await got('/get_svg', {
+  let res = await got('/svg', {
     searchParams: { id: tokens[0].id }
   });
   t.equal(res.statusCode, 200, 'no auth');
   
-  res = await got('/get_svg', {
+  res = await got('/svg', {
     searchParams: { id: tokens[0].id },
     headers: { 'Authorization': 'Bearer ' + jwt.garbage }
   });
   t.equal(res.statusCode, 200, 'no auth needed, but garbage supplied');
   
-  res = await got('/get_svg', {
+  res = await got('/svg', {
     searchParams: { id: tokens[0].id },
     headers: { 'Authorization': 'Bearer ' + jwt.public }
   });
   t.equal(res.statusCode, 200, 'no auth needed, but valid supplied');
   
-  res = await got('/get_svg', {
+  res = await got('/svg', {
     searchParams: { id: tokens[0].id },
     headers: { 'Authorization': 'Bearer ' + jwt.public_invalid }
   });
@@ -228,16 +228,16 @@ tap.test('check all routes', async t => {
   let int = await db.request_interaction();
   await db.deposit_interaction(int.id, ['a', 'b', 'c']);
   
-  await check_route('get', '/get_token', ['public', 'admin']);
-  await check_route('get', '/get_tokens', ['public', 'admin']);
+  await check_route('get', '/token', ['public', 'admin']);
+  await check_route('get', '/tokens', ['public', 'admin']);
   
-  await check_route('get', '/get_svg', ['public', 'exhibition', 'generator', 'admin', 'nosub']);
+  await check_route('get', '/svg', ['public', 'exhibition', 'generator', 'admin', 'nosub']);
   
   await check_route('get', '/request_interaction', ['exhibition', 'admin']);
   await check_route('get', '/deposit_interaction', ['exhibition', 'admin']);
-  await check_route('get', '/get_single_interaction_updates', ['exhibition', 'admin']);
+  await check_route('get', '/interaction_updates', ['exhibition', 'admin']);
   
-  await check_route('put', '/put_token', ['generator', 'admin']);
-  await check_route('get', '/get_new_interaction_updates', ['generator', 'admin']);
+  await check_route('put', '/token', ['generator', 'admin']);
+  await check_route('get', '/new_interaction_updates', ['generator', 'admin']);
   await check_route('get', '/update_interaction', ['generator', 'admin']);
 });
