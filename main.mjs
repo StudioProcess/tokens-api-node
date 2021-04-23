@@ -5,7 +5,7 @@ import {readFileSync} from 'fs';
 import express from 'express';
 import jwt from 'express-jwt';
 import * as db from './db.mjs';
-import { log_req, pick } from './util.mjs';
+import { pick, sleep } from './util.mjs';
 
 export const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 const JWT_SECRET = process.env.JWT_SECRET || readFileSync(CONFIG.auth.jwt_secret, {encoding:'utf8'}).trim();
@@ -322,16 +322,20 @@ app.get('/update_interaction', require_sub('generator', 'admin'), async (req, re
 
 // db check
 const db_status = await db.check_dbs();
-if ( Object.values(db_status).some(x => x == false) ) {
-  console.error('dbs not ready', db_status);
-  process.exit();
-}
+Object.entries(db_status).forEach( async ([db_name, status]) => {
+  if (!status) {
+    console.log(`creating db: ${db_name}`);
+    await db.create_db(db_name);
+  }
+});
+// need to wait a bit if we have just created databases, otherwise design doc creation wil fail
+if (Object.values(db_status).includes(false)) await sleep(1000);
 
 // design docs check (filters and views)
 const design_docs_status = await db.check_design_docs();
 if (!design_docs_status) {
+  console.log('updating design docs');
   await db.create_design_docs();
-  console.log('updated design docs');
 }
 
 // start server
