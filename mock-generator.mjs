@@ -1,13 +1,16 @@
+#!/usr/bin/env node
 import { readFileSync } from 'fs';
 import got from 'got';
 import { random_svg, sleep, timestamp, inspect } from './util.mjs';
 import { request } from './test_util.mjs';
+import * as make_jwt from './make_jwt.mjs';
 
-const MAIN_CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 export const CONFIG = {
   loop_time: 500, // when queue is empty
   display_time: 15000
 };
+
+const AUTH_TOKEN = make_jwt.make('generator'); // create valid auth token with subject 'generator'
 
 const queue = [];
 let seq = 0;
@@ -19,6 +22,7 @@ let generator_sleep; // cancelable util.sleep promise
 // perpetually handle new interactions; fills the queue, notifies of initial queue position
 async function handle_new_interactions() {
   interaction_update_request = request('/new_interaction_updates', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
     searchParams: {since: seq}
   });
@@ -38,6 +42,7 @@ async function handle_new_interactions() {
   console.log('new interaction:', int);
   // notify of queue position
   res = await request('/update_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
     searchParams: { id: int.id, queue_position: int.queue_position }
   });
@@ -70,12 +75,14 @@ async function generate() {
     // update all queueing interactions
     const updates = [];
     updates.push(request('/update_interaction', {
+      headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
       responseType: 'json',
       searchParams: { id: int.id, queue_position: 0, token_id: id }
     }));
     
     queue.forEach( (int, idx) => {
       updates.push(request('/update_interaction', {
+        headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
         responseType: 'json',
         searchParams: { id: int.id, queue_position: idx + 1 }
       }));
