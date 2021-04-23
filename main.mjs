@@ -331,7 +331,15 @@ app.get('/update_interaction', require_sub('generator', 'admin'), async (req, re
 });
 
 
-// db check
+// dbms online check
+console.log('starting...')
+await sleep(3000);
+if (! await db.check_dbms()) {
+  console.log('database not online: exiting');
+  process.exit(1);
+}
+
+// dbs check
 const db_status = await db.check_dbs();
 Object.entries(db_status).forEach( async ([db_name, status]) => {
   if (!status) {

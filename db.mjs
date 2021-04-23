@@ -47,6 +47,16 @@ export function request(method='get', path='', options={}) {
   return got(DB.url + path, options);
 }
 
+// Check if CouchDB is online
+export async function check_dbms() {
+  try {
+    const res = await request('get', `/_up`);
+    if (res.statusCode == 200) return true;
+  } catch (e) { /* nop */ }
+  return false;
+}
+
+// Check if neccessary databases exist
 export async function check_dbs() {
   const promises = [ check_db(DB.tokens_db), check_db(DB.interactions_db) ];
   const results = await Promise.all(promises);
