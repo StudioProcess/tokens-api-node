@@ -73,7 +73,7 @@ elif [ $1 == "status" ] ; then
   sudo systemctl status $service
 elif [ $1 == "logs" ] ; then
   echo "[ Service Logs ]"
-  sudo journalctl -u ${service}.service
+  sudo journalctl -u ${service}.service -e
 else
   usage
 fi
