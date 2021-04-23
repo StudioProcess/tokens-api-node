@@ -23,6 +23,17 @@ tap.teardown(async () => {
 });
 
 
+tap.test('main route', async t => {
+  let res = await got('/', {responseType:'json'});
+  t.has(res.body, {  });
+  t.match(res.body, {
+    name: /.*/,
+    description: /.*/,
+    version: /.*/,
+    git_sha: util.git_sha() 
+  });
+});
+
 tap.test('get token', async t => {
   let res = await got('/token', {
     responseType: 'json',

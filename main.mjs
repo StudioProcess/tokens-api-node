@@ -5,10 +5,12 @@ import {readFileSync} from 'fs';
 import express from 'express';
 import jwt from 'express-jwt';
 import * as db from './db.mjs';
-import { pick, sleep } from './util.mjs';
+import { pick, sleep, git_sha } from './util.mjs';
 
 export const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 const JWT_SECRET = process.env.JWT_SECRET || readFileSync(CONFIG.auth.jwt_secret, {encoding:'utf8'}).trim();
+const PACKAGE_JSON = JSON.parse(readFileSync('./package.json'));
+const GIT_SHA = git_sha();
 
 const app = express();
 
@@ -120,6 +122,15 @@ function other_error(res, e) {
   return;
 }
 
+
+app.get('/', async (req, res) => {
+  res.json({
+    name: PACKAGE_JSON.name,
+    description: PACKAGE_JSON.description,
+    version: PACKAGE_JSON.version,
+    git_sha: GIT_SHA
+  });
+});
 
 app.get('/token', require_sub('public', 'admin'), async (req, res) => {
   // no id (null, undefined, '')

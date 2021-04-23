@@ -1,5 +1,6 @@
 import { inspect as _inspect } from 'util';
 import crypto from 'crypto';
+import child_process from 'child_process';
 
 /**
  * Printable strings from object
@@ -120,4 +121,12 @@ export function log_res(res) {
   return console.log(pick(res, [
     'statusCode', 'statusMessage', 'method', 'url', 'headers', 'body'
   ]));
+}
+
+export function git_sha() {
+  try {
+    return child_process.execSync('git rev-parse HEAD', {encoding:'utf8'}).trim();
+  } catch {
+    return undefined;
+  }
 }
