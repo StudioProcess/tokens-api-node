@@ -65,6 +65,7 @@ function require_sub(...subs) {
 
 // middleware to parse query values (numbers or boolean)
 function parse_query_val(str) {
+  if (typeof str != 'string') return str; // catch undefined, null etc.
   if (str === '') return str; // special case for empty string, because Number('') -> 0
   
   // integer
