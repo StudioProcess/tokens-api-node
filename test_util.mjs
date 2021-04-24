@@ -109,7 +109,7 @@ export function stop_generator() {
 // Allows self signed certificates
 // Note: Not defined async (no need, since it doesn't use await). Async removes cancel method from returned promise
 export function request(path='', options = {}) {
-  const is_localhost = ['localhost', '127.0.0.1'].includes(MAIN_CONFIG.host);
+  const is_localhost = ['localhost', '127.0.0.1', '0.0.0.0'].includes(MAIN_CONFIG.host);
   options = Object.assign({
     https: {
       rejectUnauthorized: !is_localhost // allow self signed cert locally
