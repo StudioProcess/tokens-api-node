@@ -251,11 +251,19 @@ async function get_tokens_offset_neg(offset=-1, count=1, newest_first=true) {
 }
 
 async function get_tokens_from_id(start_id, count=1, newest_first=true) {
+  // get start_key for descending true or false
+  // when searching backwards (descending), make sure we have a high key (but not higher than the next valid one)
+  // this ensures a partial start_key will work as well
+  const start_key = {
+    true:  `"${start_id}\ufff0"`, // start_key when direction is descending
+    false: `"${start_id}"`,       // start_key when direction is acending
+  };
+  
   const searchParams = {
     'include_docs': true,
     'limit': count + 1,
     'descending': newest_first,
-    'start_key': `"${start_id}"`
+    'start_key': start_key[newest_first]
   };
   
   const res = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
@@ -280,6 +288,7 @@ async function get_tokens_from_id(start_id, count=1, newest_first=true) {
   if (body.offset > 0) {
     searchParams.limit = 2;
     searchParams.descending = !searchParams.descending;
+    searchParams.start_key = start_key[searchParams.descending];
     const res_prev = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
     res_prev.body.rows = res_prev.body.rows.map(row => row.doc);
     body.prev = res_prev.body.rows[1]._id;
@@ -291,11 +300,19 @@ async function get_tokens_from_id(start_id, count=1, newest_first=true) {
 }
 
 async function get_tokens_until_id(end_id, count=1, newest_first=true) {
+  // get start_key for descending true or false
+  // when searching backwards (descending), make sure we have a high key (but not higher than the next valid one)
+  // this ensures a partial start_key will work as well
+  const start_key = {
+    true:  `"${end_id}\ufff0"`, // start_key when direction is descending
+    false: `"${end_id}"`,       // start_key when direction is acending
+  };
+  
   const searchParams = {
     'include_docs': true,
     'limit': count + 1,
     'descending': !newest_first,
-    'start_key': `"${end_id}"`
+    'start_key': start_key[!newest_first]
   };
   
   const res = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
@@ -321,6 +338,7 @@ async function get_tokens_until_id(end_id, count=1, newest_first=true) {
   if (body.offset > 0) {
     searchParams.limit = 2;
     searchParams.descending = !searchParams.descending;
+    searchParams.start_key = start_key[searchParams.descending];
     const res_next = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
     res_next.body.rows = res_next.body.rows.map(row => row.doc);
     body.next = res_next.body.rows[1]._id;
