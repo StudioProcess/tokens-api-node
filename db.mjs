@@ -471,15 +471,18 @@ export async function update_interaction(id, queue_position, token_id=null) {
 }
 
 // Returns: { id, seq, color, keywords }
-export async function get_new_interaction_updates(since=0) {
+export async function get_new_interaction_updates(since=0, timeout=60000) {
   const res = await request('get', `/${DB.interactions_db}/_changes`, {
     searchParams: {
       feed: 'longpoll',
       filter: 'tfcc/new',
       include_docs: true,
       since,
+      timeout
     }
   });
+  // the request will return after 60 seconds with empty results
+  if (res.body.results.length == 0) throw {error: 'timeout'};
   const doc = res.body.results[0].doc;
   return {
     id: doc._id,

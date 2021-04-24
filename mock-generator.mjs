@@ -7,7 +7,8 @@ import * as make_jwt from './make_jwt.mjs';
 
 export const CONFIG = {
   loop_time: 500, // when queue is empty
-  display_time: 15000
+  display_time: 15000,
+  longpoll_timeout: process.env.LONGPOLL_TIMEOUT || 60000
 };
 
 const AUTH_TOKEN = make_jwt.make('generator'); // create valid auth token with subject 'generator'
@@ -24,31 +25,34 @@ async function handle_new_interactions() {
   interaction_update_request = request('/new_interaction_updates', {
     headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
-    searchParams: {since: seq}
+    searchParams: {since: seq, timeout: CONFIG.longpoll_timeout},
+    retry: 0
   });
-  let res;
   try {
-    res = await interaction_update_request;
+    let res = await interaction_update_request;
+    const int = res.body;
+    seq = int.seq;
+    delete int.rev;
+    delete int.seq;
+    int.queue_position = queue.length + 1;
+    queue.push( int ); // add interaction to queue;
+    console.log('new interaction:', int);
+    // notify of queue position
+    res = await request('/update_interaction', {
+      headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
+      responseType: 'json',
+      searchParams: { id: int.id, queue_position: int.queue_position }
+    });
+    console.log('new interaction queue position notified:', int.queue_position);
+    if (!should_stop) handle_new_interactions();
   } catch (e) {
     if (interaction_update_request.isCanceled) return; // exit handler loop when request was canceled
-    throw e;
+    if (e.response?.statusCode == 504) { // timeout
+      if (!should_stop) handle_new_interactions();
+    } else {
+      throw e;
+    }
   }
-  const int = res.body;
-  seq = int.seq;
-  delete int.rev;
-  delete int.seq;
-  int.queue_position = queue.length + 1;
-  queue.push( int ); // add interaction to queue;
-  console.log('new interaction:', int);
-  // notify of queue position
-  res = await request('/update_interaction', {
-    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
-    responseType: 'json',
-    searchParams: { id: int.id, queue_position: int.queue_position }
-  });
-  console.log('new interaction queue position notified:', int.queue_position);
-  
-  if (!should_stop) handle_new_interactions();
 }
 
 async function generate() {
@@ -77,14 +81,16 @@ async function generate() {
     updates.push(request('/update_interaction', {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
       responseType: 'json',
-      searchParams: { id: int.id, queue_position: 0, token_id: id }
+      searchParams: { id: int.id, queue_position: 0, token_id: id },
+      retry: 0
     }));
     
     queue.forEach( (int, idx) => {
       updates.push(request('/update_interaction', {
         headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
         responseType: 'json',
-        searchParams: { id: int.id, queue_position: idx + 1 }
+        searchParams: { id: int.id, queue_position: idx + 1 },
+        retry: 0,
       }));
     });
     

@@ -117,6 +117,12 @@ function other_error(res, e) {
     return;
   }
   
+  // other errors ( {error} )
+  if (e.error) {
+    res.status(500).json({ error: 'other error', error_obj: e });
+    return;
+  }
+  
   // other errors (node)
   res.status(500).json({ error: 'other error', error_obj: pick(e, ['name', 'code', 'message', 'stack']) });
   return;
@@ -293,9 +299,13 @@ app.get('/interaction_updates', require_sub('exhibition', 'admin'), async (req, 
 
 app.get('/new_interaction_updates', require_sub('generator', 'admin'), async (req, res) => {
   try {
-    const int = await db.get_new_interaction_updates(req.query.since);
+    const int = await db.get_new_interaction_updates(req.query.since, req.query.timeout);
     res.json(int);
   } catch (e) {
+    if (e.error == 'timeout') {
+      res.status(504).end(); // Respond with 504 Gateway Timeout
+      return;
+    }
     other_error(res, e);
   }
 });
