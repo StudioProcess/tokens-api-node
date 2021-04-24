@@ -332,11 +332,13 @@ app.get('/update_interaction', require_sub('generator', 'admin'), async (req, re
 
 
 // dbms online check
-console.log('starting...')
-await sleep(3000);
 if (! await db.check_dbms()) {
-  console.log('database not online: exiting');
-  process.exit(1);
+  console.log('starting...')
+  await sleep(3000);
+  if (! await db.check_dbms()) {
+    console.log('database not online: exiting');
+    process.exit(1);
+  };
 }
 
 // dbs check
