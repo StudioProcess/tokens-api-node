@@ -447,7 +447,8 @@ export async function get_single_interaction_updates(id, since=0, timeout=60000)
   });
   // the request will return after 60 seconds (max) with empty results
   if (res.body.results.length == 0) throw {error: 'timeout'};
-  const result = res.body.results[0];
+  // use the last available result
+  const result = res.body.results[res.body.results.length-1];
   const doc = result.doc;
   return {
     id: doc._id,
@@ -486,11 +487,13 @@ export async function get_new_interaction_updates(since=0, timeout=60000) {
   });
   // the request will return after 60 seconds (max) with empty results
   if (res.body.results.length == 0) throw {error: 'timeout'};
-  const doc = res.body.results[0].doc;
+  // return first result only, even though there may be more. the next result will be retrieved by using the sequence number
+  const result = res.body.results[0]; 
+  const doc = result.doc;
   return {
     id: doc._id,
+    seq: result.seq,
     color: doc.color,
-    keywords: doc.keywords,
-    seq: res.body.results[0].seq
+    keywords: doc.keywords
   };
 }
