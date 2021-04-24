@@ -241,6 +241,7 @@ tap.test('interaction process', async t => {
     t.equal(res.id, id, 'received new interaction update');
     t.same(res.keywords, keywords, 'with correct keywords');
     t.same(res.color, color, 'and correct color');
+    t.match(res.seq, /.+/, 'and sequence number');
     
     await util.sleep(100);
     const res2 = await db.update_interaction(res.id, 2);

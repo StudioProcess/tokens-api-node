@@ -491,6 +491,6 @@ export async function get_new_interaction_updates(since=0, timeout=60000) {
     id: doc._id,
     color: doc.color,
     keywords: doc.keywords,
-    seq: res.body.seq
+    seq: res.body.results[0].seq
   };
 }

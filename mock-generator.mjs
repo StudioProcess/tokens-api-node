@@ -14,7 +14,7 @@ export const CONFIG = {
 const AUTH_TOKEN = make_jwt.make('generator'); // create valid auth token with subject 'generator'
 
 const queue = [];
-let seq = 0;
+let seq = 0; // sequence number for /new_interaction_updates
 
 let should_stop = false;
 let interaction_update_request; // cancelable got promise
@@ -31,19 +31,19 @@ async function handle_new_interactions() {
   try {
     let res = await interaction_update_request;
     const int = res.body;
+    console.log('new interaction:', int);
     seq = int.seq;
-    delete int.rev;
     delete int.seq;
     int.queue_position = queue.length + 1;
-    queue.push( int ); // add interaction to queue;
-    console.log('new interaction:', int);
-    // notify of queue position
+    // update queue position
     res = await request('/update_interaction', {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
       responseType: 'json',
       searchParams: { id: int.id, queue_position: int.queue_position }
     });
-    console.log('new interaction queue position notified:', int.queue_position);
+    console.log('initial queue position', int.queue_position, 'for interaction', int.id);
+    // add to processing queue AFTER the update (otherwise update conflicts could happen)
+    queue.push( int );
     if (!should_stop) handle_new_interactions();
   } catch (e) {
     if (interaction_update_request.isCanceled) return; // exit handler loop when request was canceled
@@ -78,13 +78,14 @@ async function generate() {
     
     // update all queueing interactions
     const updates = [];
+    // this one is done
     updates.push(request('/update_interaction', {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
       responseType: 'json',
       searchParams: { id: int.id, queue_position: 0, token_id: id },
       retry: 0
     }));
-    
+    // these move up in the queue
     queue.forEach( (int, idx) => {
       updates.push(request('/update_interaction', {
         headers: { Authorization: `Bearer ${AUTH_TOKEN}`},

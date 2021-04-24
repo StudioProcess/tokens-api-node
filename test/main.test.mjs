@@ -258,6 +258,7 @@ tap.test('interaction sequence', async t => {
     });
     t.match(res2.body, res.body);
     t.same(res2.body.keywords, ['a', 'b', 'c']);
+    t.match(res2.body.seq, /.+/);
     
     // update queue
     await util.sleep(100);
