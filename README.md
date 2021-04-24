@@ -108,11 +108,13 @@ errors:
 ### **GET /interaction_updates**
 query parameters:
 * id
+* timeout
 
 returns:\
 `{ id, queue_position, token_id }`
 
 errors:
+* 504 Timeout
 * 400 `{error: 'id missing'}`
 * 404 `{error: 'not found'}`
 

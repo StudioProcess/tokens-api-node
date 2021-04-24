@@ -290,9 +290,13 @@ app.get('/interaction_updates', require_sub('exhibition', 'admin'), async (req, 
       res.status(404).json({error: 'not found'});
       return;
     }
-    const int = await db.get_single_interaction_updates(req.query.id, req.query.since);
+    const int = await db.get_single_interaction_updates(req.query.id, req.query.since, req.query.timeout);
     res.json(int);
   } catch (e) {
+    if (e.error == 'timeout') {
+      res.status(504).end(); // Respond with 504 Gateway Timeout
+      return;
+    }
     other_error(res, e);
   }
 });

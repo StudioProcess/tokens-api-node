@@ -434,7 +434,7 @@ export async function deposit_interaction(id, keywords) {
 }
 
 // Returns: { id, seq, queue_position, token_id? }
-export async function get_single_interaction_updates(id, since=0) {
+export async function get_single_interaction_updates(id, since=0, timeout=60000) {
   const res = await request('get', `/${DB.interactions_db}/_changes`, {
     searchParams: {
       feed: 'longpoll',
@@ -442,8 +442,11 @@ export async function get_single_interaction_updates(id, since=0) {
       doc_id: id,
       include_docs: true,
       since,
+      timeout
     }
   });
+  // the request will return after 60 seconds (max) with empty results
+  if (res.body.results.length == 0) throw {error: 'timeout'};
   const result = res.body.results[0];
   const doc = result.doc;
   return {
@@ -481,7 +484,7 @@ export async function get_new_interaction_updates(since=0, timeout=60000) {
       timeout
     }
   });
-  // the request will return after 60 seconds with empty results
+  // the request will return after 60 seconds (max) with empty results
   if (res.body.results.length == 0) throw {error: 'timeout'};
   const doc = res.body.results[0].doc;
   return {

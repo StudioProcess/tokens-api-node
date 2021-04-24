@@ -238,6 +238,17 @@ tap.test('put token (errors)', async t => {
   }
 });
 
+tap.test('get new interaction updates (errors)', async t => {
+  // run this test before new interactions are deposited
+  try {
+    let res = await db.request_interaction();
+    res = await got('/new_interaction_updates', {responseType: 'json', retry: 0, searchParams: {timeout:100}});
+    t.fail('should throw');
+  } catch (e) {
+    t.equal(e.response.statusCode, 504, 'timeout');
+  }
+});
+
 tap.test('request interaction (errors)', async t => {
   // queue limit (3)
   let res1 = await got('/request_interaction', {responseType: 'json'});
@@ -401,10 +412,13 @@ tap.test('get single interaction updates (errors)', async t => {
       body: {error: 'not found'}
     }, 'invalid id');
   }
-});
-
-tap.test('get new interaction updates (errors)', async t => {
-  t.pass('has no error conditions');
+  try {
+    let res = await db.request_interaction();
+    res = await got('/interaction_updates', {responseType: 'json', retry: 0, searchParams: {id:res.id, timeout:100}});
+    t.fail('should throw');
+  } catch (e) {
+    t.equal(e.response.statusCode, 504, 'timeout');
+  }
 });
 
 tap.test('update interaction (errors)', async t => {
