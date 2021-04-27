@@ -139,7 +139,7 @@ app.get('/', async (req, res) => {
   });
 });
 
-app.get('/token', require_sub('public', 'admin'), async (req, res) => {
+app.get('/token', require_sub(), async (req, res) => {
   // no id (null, undefined, '')
   if (!req.query.id) {
     res.status(400).json({error: 'id missing'});
@@ -185,7 +185,7 @@ app.get('/svg', async (req, res) => {
   }
 });
 
-app.get('/tokens', require_sub('public', 'admin'), async (req, res) => {
+app.get('/tokens', require_sub(), async (req, res) => {
   if (req.query.offset == undefined && req.query.start_id == undefined && req.query.end_id == undefined) {
     res.status(400).json({error: 'need offset, start_id or end_id'});
     return;

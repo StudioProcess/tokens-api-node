@@ -13,12 +13,11 @@ To authenticate your request send the following header:
 [API Tokens for Admin](https://docs.google.com/document/d/1RiKbJow4UGLtR3EXqYY-szedcUF8EhPXnct8MKbYS5w/edit?usp=sharing)
 
 ## Routes
-These routes are grouped by access rights. In order to access a route, you need to authenticate your request with a JWT containing a `sub` claim with the given value.
+The list of routes is grouped by access rights. In order to access some routes, you need to authenticate your request with a JWT containing a `sub` claim with the respective value (`exhibition`, `generator` or `admin`):
 
 * (no auth needed)
 	* [GET /](#get-)
 	* [GET /svg](#get-svg)
-* `public`
 	* [GET /token](#get-token)
 	* [GET /tokens](#get-tokens)
 * `exhibition`

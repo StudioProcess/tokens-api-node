@@ -7,6 +7,9 @@ import { request as got } from '../test_util.mjs';
 let tokens;
 let main;
 
+// require auth for /token and /tokens (/svg is always without auth)
+const REQUIRE_AUTH_FOR_PUBLIC_ROUTES = false;
+
 const secret = 'y2ZHC@KS/KW6Nw;whGVKl-Nc2y/;HpOc';
 const jwt = {
   // auth tokens with iat 1618911347
@@ -65,73 +68,75 @@ tap.test('get token', async t => {
   });
   t.equal(res.statusCode, 200, 'valid auth (other valid subject)');
   
-  try {
-    let res = await got('/token', {
-      responseType: 'json',
-      searchParams: { id: tokens[0].id }
-    });
-    t.fail('should throw');
-  } catch (e) {
-    t.match(e.response, {
-      statusCode: 401,
-      body: {error: 'invalid auth'}
-    }, 'no auth provided');
-  }
-  
-  try {
-    let res = await got('/token', {
-      responseType: 'json',
-      searchParams: { id: tokens[0].id },
-      headers: { 'Authorization': 'Bearer ' + jwt.exhibition }
-    });
-    t.fail('should throw');
-  } catch (e) {
-    t.match(e.response, {
-      statusCode: 403,
-      body: {error: 'wrong subject'}
-    }, 'wrong subject');
-  }
-  
-  try {
-    let res = await got('/token', {
-      responseType: 'json',
-      searchParams: { id: tokens[0].id },
-      headers: { 'Authorization': 'Bearer ' + jwt.public_invalid }
-    });
-    t.fail('should throw');
-  } catch (e) {
-    t.match(e.response, {
-      statusCode: 401,
-      body: {error: 'invalid auth'}
-    }, 'invalid token (wrong signature)');
-  }
-  
-  try {
-    let res = await got('/token', {
-      responseType: 'json',
-      searchParams: { id: tokens[0].id },
-      headers: { 'Authorization': 'Bearer ' + jwt.garbage }
-    });
-    t.fail('should throw');
-  } catch (e) {
-    t.match(e.response, {
-      statusCode: 401,
-      body: {error: 'invalid auth'}
-    }, 'invalid token (garbage)');
-  }
-  
-  try {
-    let res = await got('/token', {
-      responseType: 'json',
-      searchParams: { id: tokens[0].id },
-      headers: { 'Authorization': 'Bearer ' + jwt.public_expired }
-    });
-    t.fail('should throw');
-  } catch (e) {
-    t.match(e.response, {
-      statusCode: 403,
-      body: {error: 'subject expired'}
-    }, 'invalid token (subject expired)');
+  if (REQUIRE_AUTH_FOR_PUBLIC_ROUTES) {
+    try {
+      let res = await got('/token', {
+        responseType: 'json',
+        searchParams: { id: tokens[0].id }
+      });
+      t.fail('should throw');
+    } catch (e) {
+      t.match(e.response, {
+        statusCode: 401,
+        body: {error: 'invalid auth'}
+      }, 'no auth provided');
+    }
+    
+    try {
+      let res = await got('/token', {
+        responseType: 'json',
+        searchParams: { id: tokens[0].id },
+        headers: { 'Authorization': 'Bearer ' + jwt.exhibition }
+      });
+      t.fail('should throw');
+    } catch (e) {
+      t.match(e.response, {
+        statusCode: 403,
+        body: {error: 'wrong subject'}
+      }, 'wrong subject');
+    }
+    
+    try {
+      let res = await got('/token', {
+        responseType: 'json',
+        searchParams: { id: tokens[0].id },
+        headers: { 'Authorization': 'Bearer ' + jwt.public_invalid }
+      });
+      t.fail('should throw');
+    } catch (e) {
+      t.match(e.response, {
+        statusCode: 401,
+        body: {error: 'invalid auth'}
+      }, 'invalid token (wrong signature)');
+    }
+    
+    try {
+      let res = await got('/token', {
+        responseType: 'json',
+        searchParams: { id: tokens[0].id },
+        headers: { 'Authorization': 'Bearer ' + jwt.garbage }
+      });
+      t.fail('should throw');
+    } catch (e) {
+      t.match(e.response, {
+        statusCode: 401,
+        body: {error: 'invalid auth'}
+      }, 'invalid token (garbage)');
+    }
+    
+    try {
+      let res = await got('/token', {
+        responseType: 'json',
+        searchParams: { id: tokens[0].id },
+        headers: { 'Authorization': 'Bearer ' + jwt.public_expired }
+      });
+      t.fail('should throw');
+    } catch (e) {
+      t.match(e.response, {
+        statusCode: 403,
+        body: {error: 'subject expired'}
+      }, 'invalid token (subject expired)');
+    }
   }
 });
 
@@ -228,8 +233,13 @@ tap.test('check all routes', async t => {
   let int = await db.request_interaction();
   await db.deposit_interaction(int.id, ['a', 'b', 'c']);
   
-  await check_route('get', '/token', ['public', 'admin']);
-  await check_route('get', '/tokens', ['public', 'admin']);
+  if (REQUIRE_AUTH_FOR_PUBLIC_ROUTES) {
+    await check_route('get', '/token', ['public', 'admin']);
+    await check_route('get', '/tokens', ['public', 'admin']);
+  } else {
+    await check_route('get', '/token', ['public', 'exhibition', 'generator', 'admin', 'nosub']);
+    await check_route('get', '/tokens', ['public', 'exhibition', 'generator', 'admin', 'nosub']);
+  }
   
   await check_route('get', '/svg', ['public', 'exhibition', 'generator', 'admin', 'nosub']);
   
