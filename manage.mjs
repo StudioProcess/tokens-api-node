@@ -24,12 +24,17 @@ args = args.map( str => str.toLowerCase() );
 
 const script = path.basename( process.argv[1] );
 
+function exit() {
+  rl.close();
+  process.exit();
+}
+
 function usage() {
   console.log(`Usage: ${script} 
     add <num>
     delete <id> [ <id> ... ]
     wipe`);
-  process.exit();
+  exit();
 }
 
 if (args.length == 0) usage();
@@ -43,6 +48,7 @@ if (args[0] == 'add') {
   if (Number.isNaN(num)) usage();
   console.log(`creating ${num} mock tokens:`);
   for (let i=0; i<num; i++) {
+    if (i>0) await util.sleep(1);
     process.stdout.write( (i+1) + '...' );
     const keywords = [ KEYWORDS[util.rndint(KEYWORDS.length)], KEYWORDS[util.rndint(KEYWORDS.length)], KEYWORDS[util.rndint(KEYWORDS.length)] ];
     const generated = util.timestamp();
@@ -53,6 +59,7 @@ if (args[0] == 'add') {
     });
     console.log(res.id);
   }
+  exit();
 } else if (args[0] == 'delete') {
   if (!args[1]) {
     console.log('need <id> id or ids to delete');
@@ -63,8 +70,7 @@ if (args[0] == 'add') {
   rl.question(`Are you sure you want to delete ${ids.length} token(s): \n${ids.join('\n')}\n? `, async response => {
     if (!response.toLowerCase() == 'yes') {
       console.log('Aborting.');
-      rl.close();
-      process.exit();
+      exit();
     }
     rl.close();
     for (let id of ids) {
@@ -77,14 +83,12 @@ if (args[0] == 'add') {
       }
     }
   });
-  
 } else if (args[0] == 'wipe') {
   const challenge = os.hostname() + '-' + util.rnd_hash(6).toUpperCase();
   rl.question(`WARNING: You are about to wipe ALL tokens and interactions from the database on ${os.hostname()}! To confirm type \'${challenge}\': `, async response => {
     if (response !== challenge) {
       console.log('Aborted.');
-      rl.close();
-      process.exit();
+      exit();
     }
     rl.close();
     console.log('Wiping:');
