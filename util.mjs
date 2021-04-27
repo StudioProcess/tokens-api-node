@@ -11,9 +11,9 @@ export const inspect = _inspect;
 /**
  * Random number
  * Call patterns:
- *   rnd()     -> [0, 1]
- *   rnd(a)    -> [0, a]
- *   rnd(a, b) -> [a, b]
+ *   rnd()     -> [0, 1)
+ *   rnd(a)    -> [0, a)
+ *   rnd(a, b) -> [a, b)
  */
 export function rnd(a, b) {
   let min = 0;
@@ -27,6 +27,17 @@ export function rnd(a, b) {
   }
   
   return min + Math.random() * (max-min);
+}
+
+/**
+ * Random integer
+ * Call patterns:
+ *   rnd()     -> [0, 1)
+ *   rnd(a)    -> [0, a)
+ *   rnd(a, b) -> [a, b)
+ */
+export function rndint(a, b) {
+  return Math.floor( rnd(a,b) );
 }
 
 /**
