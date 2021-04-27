@@ -1,7 +1,7 @@
 {
   "url": "http://localhost:5984",
-  "user": "user123",
-  "pass": "password123",
+  "user": "user",
+  "pass": "password",
   "tokens_db": "tokens",
   "interactions_db": "interactions",
   "request_options": {
