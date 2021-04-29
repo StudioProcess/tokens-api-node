@@ -168,7 +168,7 @@ app.get('/svg', async (req, res) => {
   
   try {
     const token = await db.get_single_token(req.query.id);
-    if (req.query.download) {
+    if (req.query.download != undefined) {
       res.attachment(`token-${token.id}.svg`);
       res.type('application/octet-stream');
     } else {

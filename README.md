@@ -51,9 +51,11 @@ Retrieve SVG representation of a single token. Can be used to provide direct-dow
 
 Query parameters:
 * `id`: The token id.
+* `download`: Optional. When present (can be set to empty string) triggers a direct download of the SVG.
 
 Returns:
 * SVG text of the token. Response has content-type `image/svg+xml`.
+* If `download` is used, response has content-type `application/octet-stream` and content-disposition `attachment; filename="token-<id>.svg"` which usually triggers a direct download in the browser.
 
 Errors:
 * 400 `{error: 'id missing'}`

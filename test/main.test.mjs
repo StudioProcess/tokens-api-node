@@ -50,7 +50,7 @@ tap.test('get svg', async t => {
   t.match(res.headers, {'content-type': 'image/svg+xml; charset=utf-8'}, 'headers')
   
   res = await got('/svg', {
-    searchParams: { id: tokens[1].id, download:true }
+    searchParams: { id: tokens[1].id, download: '' }
   });
   t.same(res.body, tokens[1].svg, 'got svg text');
   t.match(res.headers, {
