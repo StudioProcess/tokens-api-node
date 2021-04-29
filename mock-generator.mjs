@@ -47,11 +47,18 @@ async function handle_new_interactions() {
     if (!should_stop) handle_new_interactions();
   } catch (e) {
     if (interaction_update_request.isCanceled) return; // exit handler loop when request was canceled
+    
     if (e.response?.statusCode == 504) { // timeout
       if (!should_stop) handle_new_interactions();
-    } else {
-      throw e;
+      return;
     }
+    
+    // other errors
+    let error = e.code || e.response?.body || e;
+    console.log('error when waiting for new interactions:', error);
+    console.log('continuing...');
+    await sleep(1000);
+    if (!should_stop) handle_new_interactions();
   }
 }
 
@@ -95,8 +102,15 @@ async function generate() {
       }));
     });
     
-    await Promise.all(updates);
-    console.log('queue positions notified, queue length:', queue.length);
+    try {
+      await Promise.all(updates);
+      console.log('queue positions notified, queue length:', queue.length);
+    } catch (e) {
+      let error = e.code || e.response?.body || e;
+      console.log('error while generating token:', error);
+      console.log('quitting.');
+      process.exit(1);
+    }
     
     // simulated installation display of generated token
     generator_sleep = sleep( Math.max(CONFIG.display_time, CONFIG.loop_time) );
@@ -107,7 +121,8 @@ async function generate() {
   try {
     await generator_sleep;
   } catch (e) {
-    return;
+    // canceled
+    return; // stop generating
   }
   
   // loop
@@ -123,10 +138,18 @@ export function stop() {
 
 
 (async function main() {
+
+  handle_new_interactions().catch(e => {
+    console.log('uncaught error while handling interactions:', e);
+    console.log('quitting.');
+    process.exit(1);
+  });
   
-  handle_new_interactions();
-  
-  generate();
+  generate().catch(e => {
+    console.log('uncaught error while generatig:', e);
+    console.log('quitting.');
+    process.exit(1);
+  });
   
   console.log('Mock Generator running');
   
