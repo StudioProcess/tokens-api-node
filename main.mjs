@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import http from 'http';
 import https from 'https';
-import {readFileSync} from 'fs';
+import { readFileSync } from 'fs';
 import express from 'express';
 import jwt from 'express-jwt';
 import * as db from './db.mjs';
@@ -346,6 +346,11 @@ app.get('/update_interaction', require_sub('generator', 'admin'), async (req, re
 });
 
 
+
+/**
+ * MAIN 
+ */
+
 // dbms online check
 if (! await db.check_dbms()) {
   console.log('starting...')
@@ -391,5 +396,27 @@ server.listen(CONFIG.port, () => {
   if (!CONFIG.auth.enabled) console.warn('WARNING: Authentication disabled');
 });
 
-// Instance of http.Server. See: https://expressjs.com/en/4x/api.html#app.listen
+// gracefully handle termination signals
+['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach(sig => process.on(sig, () => {
+  console.log('signal:', sig);
+  console.log('stopping.')
+  server.close();
+}));
+
+// reload certificate on signal
+// place executable script in /etc/letsencrypt/renewal-hooks/post/ with the command tokens-api reload-cert
+process.on('SIGUSR2', () => {
+  if (!CONFIG.https.enabled) return;
+  console.log('reloading tls context (key and cert)');
+  try {
+    server.setSecureContext({
+      key: readFileSync(CONFIG.https.key),
+      cert: readFileSync(CONFIG.https.cert)
+    });
+  } catch (e) {
+    console.log('error reloading certificates:', e);
+  }
+});
+
+// Instance of http(s).Server. See: https://expressjs.com/en/4x/api.html#app.listen
 export default server;

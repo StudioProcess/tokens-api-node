@@ -1,6 +1,7 @@
 import { inspect as _inspect } from 'util';
 import crypto from 'crypto';
 import child_process from 'child_process';
+import fs from 'fs';
 
 /**
  * Printable strings from object

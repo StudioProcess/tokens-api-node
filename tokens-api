@@ -32,6 +32,7 @@ usage() {
   echo "  Start/Stop/Restart: $0 start|stop|restart"
   echo "  Status:             $0 status"
   echo "  Logs:               $0 logs"
+  echo "  Reload Certificate: $0 reload-cert"
   exit
 }
 
@@ -74,6 +75,9 @@ elif [ $1 == "status" ] ; then
 elif [ $1 == "logs" ] ; then
   echo "[ Service Logs ]"
   sudo journalctl -u ${service}.service -e
+elif [ $1 == "reload-cert" ] ; then
+  echo "[ Reload Certificate ]"
+  sudo systemctl kill $service --signal=SIGUSR2
 else
   usage
 fi
