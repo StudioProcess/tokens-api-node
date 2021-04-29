@@ -54,10 +54,19 @@ export function rnd_hash(len = 64) {
  * Consists of a single circle and two lines.
  */
 export function random_svg(custom_attr_str='') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" style="stroke:black; stroke-width:10; fill:none;"${custom_attr_str ? ' ' + custom_attr_str : ''}>
-  <circle cx="${rnd(1000)}" cy="${rnd(1000)}" r="${rnd(1000/3, 1000)}"/>
-  <line x1="${rnd(1000)}" y1="${rnd(1000)}" x2="${rnd(1000)}" y2="${rnd(1000)}"/>
-  <line x1="${rnd(1000)}" y1="${rnd(1000)}" x2="${rnd(1000)}" y2="${rnd(1000)}"/>
+  const sw = 20; // stroke width
+  const r = rnd(125, 500-sw);
+  const num_lines = rndint(1, 5);
+  function lines(n) {
+    let out = '';
+    for (let i=0; i<n; i++) {
+      out += `  <line x1="${rnd(1000-sw)}" y1="${rnd(1000-sw)}" x2="${rnd(1000-sw)}" y2="${rnd(1000-sw)}"/>\n`;
+    }
+    return out;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" style="stroke:black; stroke-width:${sw}; fill:none;"${custom_attr_str ? ' ' + custom_attr_str : ''}>
+  <circle cx="500" cy="500" r="${r}"/>
+${lines(rndint(1,5))}
 </svg>`;
 }
 
