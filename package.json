@@ -17,6 +17,7 @@
     "npm": ">=7.8.0"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-jwt": "^6.0.0",
     "got": "^11.8.2",

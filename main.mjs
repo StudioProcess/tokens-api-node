@@ -4,6 +4,7 @@ import https from 'https';
 import { readFileSync } from 'fs';
 import express from 'express';
 import jwt from 'express-jwt';
+import cors from 'cors';
 import * as db from './db.mjs';
 import { pick, sleep, git_sha } from './util.mjs';
 
@@ -13,6 +14,9 @@ const PACKAGE_JSON = JSON.parse(readFileSync('./package.json'));
 const GIT_SHA = git_sha();
 
 const app = express();
+
+// CORS configuration. See: https://github.com/expressjs/cors#configuration-options
+app.use(cors(CONFIG.cors));
 
 // middleware to require jwt subjects
 function require_sub(...subs) {
@@ -391,7 +395,7 @@ if (CONFIG.https.enabled) {
 }
 server.listen(CONFIG.port, () => {
   const secure = server instanceof https.Server;
-  console.log(`${secure ? 'HTTPS ' : ''}Server running on port ${CONFIG.port}`);
+  console.log(`${secure ? 'HTTPS ' : ''}Server running on ${CONFIG.host}:${CONFIG.port}`);
   if (!secure) console.warn('WARNING: Server is not secure (HTTPS disbaled)');
   if (!CONFIG.auth.enabled) console.warn('WARNING: Authentication disabled');
 });
