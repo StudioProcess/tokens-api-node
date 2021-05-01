@@ -7,9 +7,12 @@ DIR=$(dirname $(realpath $0))
 
 service="tokens-api"
 
-user=$USER
+# user=$USER # by default run service as user who's installing
+user="root" # by default, run service as root (need access to letsencrypt certs and port 443)
+
+# override default user from argument to install command (if supplied)
 if [ "$1" == "install" ]; then
-  [ -n "$2" ] && user=$2 # take user from argument if supplied
+  [ -n "$2" ] && user=$2
 fi
 
 service_file="[Unit]
@@ -48,7 +51,7 @@ fi
 
 if [ $1 == "install" ] ; then
   echo "[ Installing Script to /usr/local/bin ]"
-  ln -sf $(realpath $0) /usr/local/bin/$(basename $0)
+  sudo ln -sf $(realpath $0) /usr/local/bin/$(basename $0)
   echo "[ Installing Service File ]"
   sudo echo "$service_file" > /etc/systemd/system/${service}.service
   echo "[ Enabling Service ]"
