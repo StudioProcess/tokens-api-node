@@ -357,7 +357,7 @@ app.get('/update_interaction', require_sub('generator', 'admin'), async (req, re
 
 // dbms online check
 if (! await db.check_dbms()) {
-  console.log('starting...')
+  console.log('waiting for db...')
   await sleep(3000);
   if (! await db.check_dbms()) {
     console.log('database not online: exiting');

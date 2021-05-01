@@ -11,6 +11,7 @@ service_file="[Unit]
 Description=Mock Generator – Tokens for Climate Care
 Documentation=https://github.com/studioprocess/tokens-api-node
 After=network.target tokens-api.service
+Requires=tokens-api.service
 Conflicts=
 
 [Service]

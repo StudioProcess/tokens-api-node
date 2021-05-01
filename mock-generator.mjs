@@ -136,9 +136,26 @@ export function stop() {
   if (generator_sleep) generator_sleep.cancel();
 }
 
+async function api_online() {
+  try {
+    let res = await request('/', { responseType: 'json' });
+    return res.statusCode == 200;
+  } catch (e) {
+    return false;
+  }
+}
+
 
 (async function main() {
-
+  if (! await api_online()) {
+    console.log('waiting for tokens api...')
+    await sleep(3000);
+    if (! await api_online()) {
+      console.log('tokens api not online: exiting');
+      process.exit(1);
+    };
+  }
+  
   handle_new_interactions().catch(e => {
     console.log('uncaught error while handling interactions:', e);
     console.log('quitting.');

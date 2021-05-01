@@ -10,7 +10,8 @@ service="tokens-api"
 service_file="[Unit]
 Description=Web API – Tokens for Climate Care
 Documentation=https://github.com/studioprocess/tokens-api-node
-After=network.target
+After=network.target couchdb.service
+Wants=couchdb.service
 Conflicts=
 
 [Service]
