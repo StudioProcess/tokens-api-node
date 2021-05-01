@@ -7,6 +7,11 @@ DIR=$(dirname $(realpath $0))
 
 service="tokens-api"
 
+user=$USER
+if [ "$1" == "install" ]; then
+  [ -n "$2" ] && user=$2 # take user from argument if supplied
+fi
+
 service_file="[Unit]
 Description=Web API – Tokens for Climate Care
 Documentation=https://github.com/studioprocess/tokens-api-node
@@ -17,7 +22,7 @@ Conflicts=
 [Service]
 Environment=
 Type=simple
-User=$USER
+User=$user
 ExecStart=$DIR/main.mjs
 WorkingDirectory=$DIR
 Restart=always
@@ -48,6 +53,7 @@ if [ $1 == "install" ] ; then
   sudo echo "$service_file" > /etc/systemd/system/${service}.service
   echo "[ Enabling Service ]"
   sudo systemctl enable $service
+  echo "Important: Service will be run as user: $user"
 elif [ $1 == "remove" ] || [ $1 == "uninstall" ]; then
   echo "[ Disabling Service ]"
   sudo systemctl disable $service
