@@ -33,7 +33,9 @@ function usage() {
   console.log(`Usage: ${script} 
     add <num>
     delete <id> [ <id> ... ]
-    wipe`);
+    wipe-tokens
+    wipe-interactions
+    wipe-all`);
   exit();
 }
 
@@ -83,9 +85,9 @@ if (args[0] == 'add') {
       }
     }
   });
-} else if (args[0] == 'wipe') {
-  const challenge = os.hostname() + '-' + util.rnd_hash(6).toUpperCase();
-  rl.question(`WARNING: You are about to wipe ALL tokens and interactions from the database on ${os.hostname()}! To confirm type \'${challenge}\': `, async response => {
+} else if (args[0] == 'wipe-all') {
+  const challenge = os.hostname() + '-all-' + util.rnd_hash(4).toUpperCase();
+  rl.question(`WARNING: You are about to wipe ALL TOKENS and INTERACTIONS from the database on ${os.hostname()}! To confirm type \'${challenge}\': `, async response => {
     if (response !== challenge) {
       console.log('Aborted.');
       exit();
@@ -111,6 +113,52 @@ if (args[0] == 'add') {
     
     console.log('creating dbs...');
     await db.create_db(DB.tokens_db);
+    await db.create_db(DB.interactions_db);
+    
+    console.log('creating design doc...');
+    await db.create_design_docs();
+  });
+} else if (args[0] == 'wipe-tokens') {
+  const challenge = os.hostname() + '-tokens-' + util.rnd_hash(4).toUpperCase();
+  rl.question(`WARNING: You are about to wipe ALL TOKENS from the database on ${os.hostname()}! To confirm type \'${challenge}\': `, async response => {
+    if (response !== challenge) {
+      console.log('Aborted.');
+      exit();
+    }
+    rl.close();
+    console.log('Wiping:');
+    
+    process.stdout.write(`deleting ${DB.tokens_db}...`);
+    try {
+      await db.delete_db(DB.tokens_db);
+      console.log('OK');
+    } catch (e) {
+      console.log('error: ', e.response.body);
+    }
+    
+    console.log('creating db...');
+    await db.create_db(DB.tokens_db);
+    
+  });
+} else if (args[0] == 'wipe-interactions') {
+  const challenge = os.hostname() + '-interactions-' + util.rnd_hash(4).toUpperCase();
+  rl.question(`WARNING: You are about to wipe ALL INTERACTIONS from the database on ${os.hostname()}! To confirm type \'${challenge}\': `, async response => {
+    if (response !== challenge) {
+      console.log('Aborted.');
+      exit();
+    }
+    rl.close();
+    console.log('Wiping:');
+    
+    process.stdout.write(`deleting ${DB.interactions_db}...`);
+    try {
+      await db.delete_db(DB.interactions_db);
+      console.log('OK');
+    } catch (e) {
+      console.log('error: ', e.response.body);
+    }
+    
+    console.log('creating db...');
     await db.create_db(DB.interactions_db);
     
     console.log('creating design doc...');
