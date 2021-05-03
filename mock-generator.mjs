@@ -76,6 +76,7 @@ async function generate() {
       svg,
     };
     const res = await request('/token', {
+      headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
       responseType: 'json',
       method: 'put',
       json: token

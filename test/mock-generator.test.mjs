@@ -3,8 +3,12 @@ import * as db from '../db.mjs';
 import * as util from '../util.mjs';
 import * as test_util from '../test_util.mjs';
 import { request as got } from '../test_util.mjs';
+import * as make_jwt from '../make_jwt.mjs';
 
 let tokens;
+
+const AUTH_GENERATOR = make_jwt.make('generator'); // create valid auth token with subject 'exhibition'
+const AUTH_TOKEN = make_jwt.make('exhibition'); // create valid auth token with subject 'exhibition'
 
 tap.before(async () => {
   // setup mock databases
@@ -14,7 +18,7 @@ tap.before(async () => {
     retry: 0
   };
   // start server
-  await test_util.start_server();
+  await test_util.start_server(true); // start server with auth enabled
   // start mock generator
   await test_util.start_generator();
 });
@@ -28,6 +32,7 @@ tap.teardown(async () => {
 
 async function test_queue(t, interaction_id, since=0, queue_pos=null) {
   let res = await got('/interaction_updates', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
     searchParams: { id: interaction_id, since }
   });
@@ -48,10 +53,12 @@ async function test_queue(t, interaction_id, since=0, queue_pos=null) {
 tap.test('interaction sequence', async t => {
   // interaction 1
   const res1 = await got('/request_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
   });
   t.match(res1.body, { id: test_util.match_id, color: test_util.match_color }, 'request interaction (1)');
   const res1x = await got('/deposit_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
     searchParams: { id: res1.body.id, keywords: 'a,b,c' }
   });
@@ -62,10 +69,12 @@ tap.test('interaction sequence', async t => {
 
   // interaction 2
   const res2 = await got('/request_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
   });
   t.match(res2.body, { id: test_util.match_id, color: test_util.match_color }, 'request interaction (2)');
   const res2x = await got('/deposit_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
     searchParams: { id: res2.body.id, keywords: 'd,e,f' }
   });
@@ -76,10 +85,12 @@ tap.test('interaction sequence', async t => {
 
   // interaction 3
   const res3 = await got('/request_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
   });
   t.match(res3.body, { id: test_util.match_id, color: test_util.match_color }, 'request interaction (3)');
   const res3x = await got('/deposit_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
     searchParams: { id: res3.body.id, keywords: 'd,e,f' }
   });
