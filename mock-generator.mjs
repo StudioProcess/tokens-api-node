@@ -6,7 +6,8 @@ import { request } from './test_util.mjs';
 import * as make_jwt from './make_jwt.mjs';
 
 export const CONFIG = {
-  loop_time: 5000, // when queue is empty
+  loop_time: 500, // how fast to check for items in the queue
+  initial_delay: 5000, // when queue is empty
   display_time: 15000,
   longpoll_timeout: process.env.LONGPOLL_TIMEOUT || 60000
 };
@@ -66,6 +67,8 @@ async function generate() {
   // take first item in queue
   const int = queue.shift();
   if (int != null) {
+    if (queue.length == 0) await sleep(CONFIG.initial_delay);
+    
     console.log('generating for:', int.id);
     // generate new token
     const ts = timestamp();
