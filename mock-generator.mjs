@@ -6,7 +6,7 @@ import { request } from './test_util.mjs';
 import * as make_jwt from './make_jwt.mjs';
 
 export const CONFIG = {
-  loop_time: 500, // when queue is empty
+  loop_time: 5000, // when queue is empty
   display_time: 15000,
   longpoll_timeout: process.env.LONGPOLL_TIMEOUT || 60000
 };
