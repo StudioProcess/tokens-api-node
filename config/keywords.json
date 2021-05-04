@@ -1,9 +1,11 @@
 [
   "earth", "soil", "stone", "land",
-   "wood", "forest", "tree", "wooden",
-   "fossil", "oil", "coal", "carbon",
-   "ice", "glacier", "frozen", "water", "rain", "sea", "lake",
-   "river", "air", "wind", "breathing", "sun", "fire", "hot",
+  "wood", "forest", "tree", "wooden",
+  "fossil", "oil", "coal", "carbon",
+  "ice", "glacier", "frozen",
+  "water", "rain", "sea", "lake", "river",
+  "air", "wind", "breathing",
+  "sun", "fire", "hot",
 
   "energy", "power", "electricity", "energetic",
   "agriculture", "farming", "cultivation",  
@@ -14,7 +16,7 @@
   "mobility", "movement", "mobile",
 
   "abundance", "excess", "sufficiency",  "abundant",
-  "sufficient", "surpulus",
+  "sufficient", "surplus",
   "scarcity", "shortage", "lack", "drought", "famine", "scarce", "limited", "rare",
   "artificiality", "artificial", "synthetic", "unnatural",
   "nature", "environment", "natural", "unaffected", "environmental",
@@ -25,5 +27,19 @@
   "individual", "individuality", "individual",
   "fairness", "fair",
   "cycle", "recycling", "circle", "loop", "cyclic", "cyclical", "looping", "periodic",
-  "line", "edge", "border", "path", "road", "direction", "linear", "straight"
+  "line", "edge", "border", "path", "road", "direction", "linear", "straight",
+  
+  "care", "responsibility", "management", "careful", "responsible", "mindful",
+  "neglect", "disregard", "endanger", "abuse", "damage", "neglected", "damaged",
+  "action", "active",
+  "change", "advance", "innovation", "shift", "revolution", "transformation", "transition", "changing", "transform",
+  "stagnation", "inaction",	"static", "stagnant", "rigid",
+  "consumption", "consumer",
+  "production", "product", "manufacture",
+  "decision", "choice", "outcome", "decisive",
+  "distribution",
+  "collection",
+  "inclusion", "inclusive",
+  "exclusion", "exclusive",
+  "exploitation"
 ]
