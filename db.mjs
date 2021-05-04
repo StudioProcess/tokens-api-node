@@ -88,6 +88,23 @@ export async function check_design_docs() {
   }
 }
 
+export async function check_uuid_alg() {
+  try {
+    const res = await request('get', '/_node/_local/_config/uuids/algorithm');
+    const alg = res.body;
+    return alg == 'utc_random';
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function set_uuid_alg() {
+    const res = await request('put', '/_node/_local/_config/uuids/algorithm', {
+      json: 'utc_random'
+    });
+    return res.body;
+}
+
 export async function create_db(name) {
   const res = await request('put', `/${name}`);
   return res.body;

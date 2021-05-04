@@ -365,6 +365,13 @@ if (! await db.check_dbms()) {
   };
 }
 
+// check uuid algorithm (needs to be utc_random for globally sequential ids)
+const uuid_status = await db.check_uuid_alg();
+if (!uuid_status) {
+  console.log(`setting uuid algorithm`);
+  await db.set_uuid_alg();
+}
+
 // dbs check
 const db_status = await db.check_dbs();
 Object.entries(db_status).forEach( async ([db_name, status]) => {
