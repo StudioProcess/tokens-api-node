@@ -25,9 +25,9 @@ The list of routes is grouped by access rights. In order to access some routes, 
 	* [GET /deposit_interaction](#get-deposit_interaction)
 	* [GET /interaction_updates](#get-interaction_updates)
 * `generator`
-	* [PUT /token](#put-token)
 	* [GET /new_interaction_updates](#get-new_interaction_updates)
 	* [GET /update_interaction](#get-update_interaction)
+	* [PUT /token](#put-token)
 * `admin`
 	* [DELETE /token](#delete-token)
 	* [DELETE /tokens](#delete-tokens)
@@ -168,8 +168,65 @@ Errors:
 * 404 `{error: 'not found'}`
 
 
-### **PUT /token**
 ### **GET /new_interaction_updates**
+Allows the token generator (installation) to listen for incoming interactions. Use with long polling.
+
+Query parameters:
+* `since`: (default: ignored)
+* `timeout`: (default: `60000`)
+
+Returns:
+* `{ id, seq, color, keywords }`
+	* `id`: The interaction id
+	* `seq`: Update sequence number. Use with the `since` parameter in a subsequent request to get the next update.
+	* `color`: RGB hex color code, e.g. `#70c5ff`
+	* `keywords`: Array of three strings
+
+Errors:
+* 504 Timeout reached
+
+
 ### **GET /update_interaction**
+Allows the installation to notify queuing interactions about their queue position or, eventually, the generated token id. One of `queue_position` or `token_id` is required.
+
+Query parameters:
+* `id`: The interaction id
+* `queue_position`: Integer >= 0. Can be omitted if `token_id` is given.
+* `token_id`: Optional. If present, `queue_position` will be set to 0.
+
+Returns:
+* No return value
+
+Errors:
+* 400 `{error: 'id missing'}`
+* 400 `{error: 'queue_position or token_id required'}`
+* 400 `{error: 'invalid queue_position'}`, if `queue_position` < 0
+* 404 `{error: 'interaction not found'}`
+* 404 `{error: 'token not found'}`, if `token_id` was provided, but invalid
+
+
+### **PUT /token**
+Allows the installation to archive newly generated tokens.
+
+Query parameters:
+* None
+
+Request body:
+* `{ svg, generated, keywords }`
+	* `svg`: SVG of the token.
+	* `generated`: ISO timestamp.
+	* `keywords`: Array of (three) keywords used to generate the token.
+
+Returns:
+* `{ id }`
+	* `id`: Token id.
+
+Errors:
+* 400 `{error: 'required attribute(s) missing'}`, if one or more of the required attributes are missing in the request body JSON object.
+
+
 ### **DELETE /token**
+
+
 ### **DELETE /tokens**
+
