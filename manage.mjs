@@ -55,7 +55,7 @@ if (args[0] == 'add') {
     const keywords = [ KEYWORDS[util.rndint(KEYWORDS.length)], KEYWORDS[util.rndint(KEYWORDS.length)], KEYWORDS[util.rndint(KEYWORDS.length)] ];
     const generated = util.timestamp();
     const res = await db.put_token({
-      svg: util.random_svg(`tfcc-generated="${generated}" tfcc-keywords="${keywords.join(',')}"`),
+      svg: util.random_svg(`tfcc:generated="${generated}" tfcc:keywords="${keywords.join(',')}"`),
       generated,
       keywords
     });
