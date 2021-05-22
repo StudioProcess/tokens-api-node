@@ -151,3 +151,32 @@ export function git_sha() {
     return undefined;
   }
 }
+
+/**
+ * Timestamp based ids; 1ms resolution
+ */
+export function short_id() {
+  const offset = '2021-05-01';
+  const ts = Date.now() - Date.parse(offset); // timestamp
+  const full_alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const alphabet = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // O and I are excluded
+  
+  let id = ts.toString(alphabet.length).toUpperCase();
+  // map from full alphabet to actual alphabet
+  id = id.split('').map(x => {
+    let idx = full_alphabet.indexOf(x);
+    return alphabet[idx];
+  }).join('');
+  return id;
+}
+
+export function pad_id(id) {
+  return id.padStart(16, '0');
+}
+
+export function unpad_id(id) {
+  while (id[0] == '0') {
+    id = id.slice(1);
+  }
+  return id;
+}
