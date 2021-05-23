@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import got from 'got';
-import { short_id, sleep } from './util.mjs';
+import { short_id, sleep, rnd } from './util.mjs';
 
 const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 export const DB = JSON.parse(readFileSync(CONFIG.db_config));
@@ -147,12 +147,25 @@ export async function get_uuids(n=1) {
 
 
 // Returns: { id }
-export async function put_token(token) {
-  token = Object.assign( {}, token, {_id: short_id()} ); // copy token, add id
-  await sleep(3); // limit token generation rate (ensures next id is unique)
-  const res = await request('post', `/${DB.tokens_db}`, {json: token});
-  // res.body: { ok: true, id: '', rev: '' }
-  return { id: res.body.id };
+export async function put_token(token, max_retries = 10) {
+  token = Object.assign( {}, token ); // copy token
+  
+  let retries = 0;
+  while (true) {
+    try {
+      token._id = short_id(); // add id
+      const res = await request('post', `/${DB.tokens_db}`, {json: token}); // seems to take >= 2ms, so it's fine for id generation, if the client is waiting
+      // res.body: { ok: true, id: '', rev: '' }
+      return { id: res.body.id };
+    } catch (e) {
+      // 409 Conflict: A Conflicting Document with same ID already exists
+      if (e instanceof got.HTTPError && e.response.statusCode == 409 && retries < max_retries) {
+        retries++;
+        await sleep( rnd(1,100*retries) ); // limit token generation rate (ensures next id is unique)
+        continue; // try again
+      } else throw e;
+    }
+  }
 }
 
 // Returns: ''
