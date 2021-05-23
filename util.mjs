@@ -167,11 +167,12 @@ export function short_id() {
     let idx = full_alphabet.indexOf(x);
     return alphabet[idx];
   }).join('');
-  return id;
+  
+  return pad_id(id);
 }
 
 export function pad_id(id) {
-  return id.padStart(16, '0');
+  return id.padStart(32, '0');
 }
 
 export function unpad_id(id) {
@@ -179,4 +180,12 @@ export function unpad_id(id) {
     id = id.slice(1);
   }
   return id;
+}
+
+export function id_in(id) {
+  return pad_id(id.toUppercase());
+}
+
+export function id_out(id) {
+  return unpad_id(id);
 }

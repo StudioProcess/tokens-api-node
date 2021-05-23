@@ -18,7 +18,7 @@ tap.test('put token', async t => {
     generated: util.timestamp(),
   };
   const res = await db.put_token(token);
-  t.match(res, { id: test_util.match_id }, 'result is valid');
+  t.match(res, { id: test_util.match_short_id }, 'result is valid');
   
   const res1 = await db.get_single_token(res.id);
   t.same(res1, { id: res.id, svg: token.svg, generated: token.generated }, 'get successful');

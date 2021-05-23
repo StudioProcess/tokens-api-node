@@ -10,6 +10,7 @@ export let _server;
 export let _generator;
 
 export const match_id = /[0-9a-f]{32}/; // 32 hex digits
+export const match_short_id = /[0-9A-Z]{32}/; // 32 hex digits
 export const match_color = /#[0-9a-f]{6}/; // hex color
 
 export async function setup_mock_db() {

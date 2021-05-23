@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import got from 'got';
+import { short_id, sleep } from './util.mjs';
 
 const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 export const DB = JSON.parse(readFileSync(CONFIG.db_config));
@@ -147,6 +148,8 @@ export async function get_uuids(n=1) {
 
 // Returns: { id }
 export async function put_token(token) {
+  token = Object.assign( {}, token, {_id: short_id()} ); // copy token, add id
+  await sleep(3); // limit token generation rate (ensures next id is unique)
   const res = await request('post', `/${DB.tokens_db}`, {json: token});
   // res.body: { ok: true, id: '', rev: '' }
   return { id: res.body.id };

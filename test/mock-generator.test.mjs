@@ -39,7 +39,7 @@ async function test_queue(t, interaction_id, since=0, queue_pos=null) {
   t.equal(res.body.id, interaction_id, `interaction update ${res.body.id} (${res.body.queue_position})`);
   if (queue_pos != null) t.equal(res.body.queue_position, queue_pos, 'queue position');
   if (res.body.queue_position == 0) {
-    t.match(res.body.token_id, test_util.match_id, 'token generated');
+    t.match(res.body.token_id, test_util.match_short_id, 'token generated');
     let res2 = await got('/token', {
       responseType: 'json',
       searchParams: { id: res.body.token_id }
