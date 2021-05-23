@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import got from 'got';
-import { short_id, sleep, rnd } from './util.mjs';
+import { short_id, sleep, rnd, id_in, id_out } from './util.mjs';
 
 const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 export const DB = JSON.parse(readFileSync(CONFIG.db_config));
@@ -156,7 +156,7 @@ export async function put_token(token, max_retries = 10) {
       token._id = short_id(); // add id
       const res = await request('post', `/${DB.tokens_db}`, {json: token}); // seems to take >= 2ms, so it's fine for id generation, if the client is waiting
       // res.body: { ok: true, id: '', rev: '' }
-      return { id: res.body.id };
+      return { id: id_out(res.body.id) };
     } catch (e) {
       // 409 Conflict: A Conflicting Document with same ID already exists
       if (e instanceof got.HTTPError && e.response.statusCode == 409 && retries < max_retries) {
@@ -170,6 +170,7 @@ export async function put_token(token, max_retries = 10) {
 
 // Returns: ''
 export async function delete_token(id) {
+  id = id_in(id);
   const res = await request('get', `/${DB.tokens_db}/${id}`);
   const res1 = await request('delete', `/${DB.tokens_db}/${id}`, {
     searchParams: { rev: res.body._rev }
@@ -180,9 +181,10 @@ export async function delete_token(id) {
 
 // Returns: { id, generated, svg , ... }
 export async function get_single_token(id) {
+  id = id_in(id);
   const res = await request('get', `/${DB.tokens_db}/${id}`);
   // res.body: { _id: '', _rev: '', token data ... }
-  res.body.id = res.body._id;
+  res.body.id = id_out(res.body._id);
   delete res.body._id;
   delete res.body._rev;
   return res.body;
@@ -212,7 +214,7 @@ async function get_tokens_offset_pos(offset=0, count=1, newest_first=true) {
   
   const body = res.body;
   body.rows = body.rows.map(row => {
-    row.doc.id = row.doc._id;
+    row.doc.id = id_out(row.doc._id);
     delete row.doc._id;
     delete row.doc._rev;
     return row.doc;
@@ -255,7 +257,7 @@ async function get_tokens_offset_neg(offset=-1, count=1, newest_first=true) {
   const res = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
   const body = res.body;
   body.rows = body.rows.map(row => {
-    row.doc.id = row.doc._id;
+    row.doc.id = id_out(row.doc._id);
     delete row.doc._id;
     delete row.doc._rev;
     return row.doc;
@@ -284,6 +286,7 @@ async function get_tokens_offset_neg(offset=-1, count=1, newest_first=true) {
 }
 
 async function get_tokens_from_id(start_id, count=1, newest_first=true) {
+  start_id = id_in(start_id);
   // get start_key for descending true or false
   // when searching backwards (descending), make sure we have a high key (but not higher than the next valid one)
   // this ensures a partial start_key will work as well
@@ -303,7 +306,7 @@ async function get_tokens_from_id(start_id, count=1, newest_first=true) {
   
   const body = res.body;
   body.rows = body.rows.map(row => {
-    row.doc.id = row.doc._id;
+    row.doc.id = id_out(row.doc._id);
     delete row.doc._id;
     delete row.doc._rev;
     return row.doc;
@@ -324,7 +327,7 @@ async function get_tokens_from_id(start_id, count=1, newest_first=true) {
     searchParams.start_key = start_key[searchParams.descending];
     const res_prev = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
     res_prev.body.rows = res_prev.body.rows.map(row => row.doc);
-    body.prev = res_prev.body.rows[1]._id;
+    body.prev = id_out(res_prev.body.rows[1]._id);
   } else {
     body.prev = null;
   }
@@ -333,6 +336,7 @@ async function get_tokens_from_id(start_id, count=1, newest_first=true) {
 }
 
 async function get_tokens_until_id(end_id, count=1, newest_first=true) {
+  end_id = id_in(end_id);
   // get start_key for descending true or false
   // when searching backwards (descending), make sure we have a high key (but not higher than the next valid one)
   // this ensures a partial start_key will work as well
@@ -352,7 +356,7 @@ async function get_tokens_until_id(end_id, count=1, newest_first=true) {
   
   const body = res.body;
   body.rows = body.rows.map(row => {
-    row.doc.id = row.doc._id;
+    row.doc.id = id_out(row.doc._id);
     delete row.doc._id;
     delete row.doc._rev;
     return row.doc;
@@ -374,7 +378,7 @@ async function get_tokens_until_id(end_id, count=1, newest_first=true) {
     searchParams.start_key = start_key[searchParams.descending];
     const res_next = await request('get', `/${DB.tokens_db}/_all_docs`, {searchParams});
     res_next.body.rows = res_next.body.rows.map(row => row.doc);
-    body.next = res_next.body.rows[1]._id;
+    body.next = id_out(res_next.body.rows[1]._id);
   } else {
     body.next = null;
   }
@@ -422,6 +426,7 @@ export async function request_interaction() {
 
 // Returns: true|false
 export async function check_token(id) {
+  id = id_in(id);
   try {
     const res = await request('head', `/${DB.tokens_db}/${id}`);
     return res.statusCode == 200;
@@ -497,7 +502,7 @@ export async function update_interaction(id, queue_position, token_id=null) {
   let int = res.body;
   if (token_id != null) {
     int.queue_position = 0;
-    int.token_id = token_id;
+    int.token_id = id_out(token_id);
     int.status = 'done';
   } else {
     int.queue_position = queue_position;

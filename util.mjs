@@ -152,8 +152,26 @@ export function git_sha() {
   }
 }
 
+
 /**
- * Timestamp based ids; 1ms resolution
+ * Pad with zeros to a length of 32, so ids are still comparable when they grow
+ */
+function pad_id(id) {
+  return id.padStart(32, '0');
+}
+
+/**
+ * Remove padding from ids
+ */
+function unpad_id(id) {
+  while (id[0] == '0') {
+    id = id.slice(1);
+  }
+  return id;
+}
+
+/**
+ * Timestamp based ids, 1ms resolution, custom alphabet
  */
 export function short_id() {
   const offset = '2021-05-01';
@@ -171,21 +189,16 @@ export function short_id() {
   return pad_id(id);
 }
 
-export function pad_id(id) {
-  return id.padStart(32, '0');
-}
-
-export function unpad_id(id) {
-  while (id[0] == '0') {
-    id = id.slice(1);
-  }
-  return id;
-}
-
+/**
+ * Process incoming ids
+ */
 export function id_in(id) {
-  return pad_id(id.toUppercase());
+  return pad_id(id.toUpperCase());
 }
 
+/**
+ * Process outgoing ids
+ */
 export function id_out(id) {
-  return unpad_id(id);
+  return unpad_id(id.toLowerCase());
 }

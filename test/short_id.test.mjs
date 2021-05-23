@@ -1,5 +1,5 @@
 import tap from 'tap';
-import { short_id, pad_id, unpad_id, sleep } from '../util.mjs';
+import { short_id, id_in, id_out, sleep } from '../util.mjs';
 import * as test_util from '../test_util.mjs';
 import * as db from '../db.mjs';
 
@@ -31,7 +31,7 @@ tap.test('padding/unpadding ids', async t => {
   }
   for (let i=0; i<100; i++) {
     let id = ids[i];
-    t.equal( pad_id(unpad_id(id)), id )
+    t.equal( id_in(id_out(id)), id )
   }
 });
 
