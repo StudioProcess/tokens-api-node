@@ -280,6 +280,9 @@ app.get('/deposit_interaction', require_sub('exhibition', 'admin'), async (req, 
     if (e.error == 'not found') {
       res.status(404).json(e);
       return;
+    } else if (e.error = 'already deposited') {
+      res.status(400).json(e);
+      return;
     }
     other_error(res, e);
   }

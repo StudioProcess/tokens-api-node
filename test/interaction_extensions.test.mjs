@@ -25,6 +25,7 @@ tap.test('timestamps for incomplete interactions', async t => {
   t.match(res.body, { requested_at: test_util.match_timestamp });
 });
 
+
 tap.test('timestamps for deposited interactions', async t => {
   let res1 = await got('/request_interaction', {
     responseType: 'json',
@@ -44,3 +45,31 @@ tap.test('timestamps for deposited interactions', async t => {
     deposited_at: test_util.match_timestamp,
   });
 });
+
+
+tap.test('depositing again', async t => {
+  let res1 = await got('/request_interaction', {
+    responseType: 'json',
+  });
+  t.match(res1.body, { requested_at: test_util.match_timestamp });
+  
+  let res2 = await got('/deposit_interaction', {
+    responseType: 'json',
+    searchParams: { id: res1.body.id, keywords: 'a,b,c' }
+  });
+  t.equal(res2.statusCode, 200);
+  
+  try {
+    await got('/deposit_interaction', {
+      responseType: 'json',
+      searchParams: { id: res1.body.id, keywords: 'x,y,z' }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'already deposited'}
+    }, 'already deposited');
+  }
+});
+

@@ -137,6 +137,7 @@ Errors:
 * 400 `{error: 'id missing'}`
 * 400 `{error: 'keywords missing'}`
 * 400 `{error: 'exactly three keywords needed'}`
+* 400 `{error: 'already deposited'}`
 * 404 `{error: 'not found'}`
 
 

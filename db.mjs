@@ -469,6 +469,9 @@ export async function deposit_interaction(id, keywords) {
     throw e;
   }
   let int = res.body;
+  if (int.status != 'incomplete') {
+    throw { error: 'already deposited' };
+  }
   int.status = 'new';
   int.keywords = keywords;
   int.deposited_at = timestamp();
