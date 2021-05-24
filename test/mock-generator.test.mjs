@@ -99,3 +99,62 @@ tap.test('interaction sequence', async t => {
     await test_queue(t, res3.body.id);
   });
 });
+
+tap.test('waiting interactions', async t => {
+  // interaction 1
+  const res1 = await got('/request_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
+    responseType: 'json',
+  });
+  t.equal(res1.statusCode, 200, 'request interaction');
+  const res1x = await got('/deposit_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
+    responseType: 'json',
+    searchParams: { id: res1.body.id, keywords: 'a,b,c' }
+  });
+  t.equal(res1x.statusCode, 200, 'deposit interaction');
+  
+  // interaction 2
+  const res2 = await got('/request_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
+    responseType: 'json',
+  });
+  t.equal(res2.statusCode, 200, 'request interaction');
+  const res2x = await got('/deposit_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
+    responseType: 'json',
+    searchParams: { id: res2.body.id, keywords: 'x,y,z' }
+  });
+  t.equal(res2x.statusCode, 200, 'deposit interaction');
+  
+  // interaction 3
+  const res3 = await got('/request_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
+    responseType: 'json',
+  });
+  t.equal(res3.statusCode, 200, 'request interaction');
+  const res3x = await got('/deposit_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
+    responseType: 'json',
+    searchParams: { id: res3.body.id, keywords: 'x,y,z' }
+  });
+  t.equal(res3x.statusCode, 200, 'deposit interaction');
+  
+  // wait for interaction 1 to complete
+  await t.test(async t => {
+    await test_queue(t, res1.body.id);
+  });
+  // crash generator and restart, picks up interaction 2 and 3
+  console.log("CRASH")
+  test_util.stop_generator();
+  await util.sleep(1000);
+  console.log("RESTART")
+  await test_util.start_generator();
+  t.test(async t => {
+    await test_queue(t, res2.body.id);
+  });
+  t.test(async t => {
+    await test_queue(t, res3.body.id);
+  });
+
+});

@@ -14,12 +14,43 @@ export const CONFIG = {
 
 const AUTH_TOKEN = make_jwt.make('generator'); // create valid auth token with subject 'generator'
 
-const queue = [];
+let queue = [];
 let seq = 0; // sequence number for /new_interaction_updates
 
 let should_stop = false;
 let interaction_update_request; // cancelable got promise
 let generator_sleep; // cancelable util.sleep promise
+
+async function queue_interaction(int) {
+  if (int.seq) {
+    seq = int.seq;
+    delete int.seq;
+  }
+  int.queue_position = queue.length + 1;
+  // update queue position
+  await request('/update_interaction', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
+    responseType: 'json',
+    searchParams: { id: int.id, queue_position: int.queue_position }
+  });
+  console.log('initial queue position', int.queue_position, 'for interaction', int.id);
+  // add to processing queue AFTER the update (otherwise update conflicts could happen)
+  queue.push( int );
+}
+
+// one-time check for old, unfinished interactions
+async function handle_waiting_interactions() {
+  let res = await request('/waiting_interactions', {
+    headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
+    responseType: 'json',
+    searchParams: { since: (new Date(Date.now() - 24*3600*1000)).toISOString() },
+    retry: 0
+  });
+  for (let int of res.body) {
+    console.log('waiting interaction:', int);
+    await queue_interaction(int);
+  }
+}
 
 // perpetually handle new interactions; fills the queue, notifies of initial queue position
 async function handle_new_interactions() {
@@ -33,18 +64,8 @@ async function handle_new_interactions() {
     let res = await interaction_update_request;
     const int = res.body;
     console.log('new interaction:', int);
-    seq = int.seq;
-    delete int.seq;
-    int.queue_position = queue.length + 1;
-    // update queue position
-    res = await request('/update_interaction', {
-      headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
-      responseType: 'json',
-      searchParams: { id: int.id, queue_position: int.queue_position }
-    });
-    console.log('initial queue position', int.queue_position, 'for interaction', int.id);
-    // add to processing queue AFTER the update (otherwise update conflicts could happen)
-    queue.push( int );
+    await queue_interaction(int);
+    
     if (!should_stop) handle_new_interactions();
   } catch (e) {
     if (interaction_update_request.isCanceled) return; // exit handler loop when request was canceled
@@ -56,7 +77,7 @@ async function handle_new_interactions() {
     
     // other errors
     let error = e.code || e.response?.body || e;
-    console.log('error when waiting for new interactions:', error);
+    console.log('error while waiting for new interactions:', error);
     console.log('continuing...');
     await sleep(1000);
     if (!should_stop) handle_new_interactions();
@@ -149,8 +170,7 @@ async function api_online() {
   }
 }
 
-
-(async function main() {
+export async function start() {
   if (! await api_online()) {
     console.log('waiting for tokens api...')
     await sleep(3000);
@@ -158,6 +178,18 @@ async function api_online() {
       console.log('tokens api not online: exiting');
       process.exit(1);
     };
+  }
+  
+  queue = [];
+  seq = 0;
+  should_stop = false;
+  
+  try {
+    await handle_waiting_interactions();
+  } catch (e) {
+    console.log('uncaught error while checking for waiting interactions:', e);
+    console.log('quitting.');
+    process.exit(1);
   }
   
   handle_new_interactions().catch(e => {
@@ -173,5 +205,8 @@ async function api_online() {
   });
   
   console.log('Mock Generator running');
-  
+}
+
+(async function main() {
+  start();
 })();

@@ -96,9 +96,13 @@ export function stop_server() {
 
 export async function start_generator() {
   console.log('starting mock generator');
-  _generator = await import('./mock-generator.mjs');
-  _generator.CONFIG.initial_delay = 500;
-  _generator.CONFIG.display_time = 1500;
+  if (!_generator) {
+    _generator = await import('./mock-generator.mjs');
+    _generator.CONFIG.initial_delay = 500;
+    _generator.CONFIG.display_time = 1500;
+  } else {
+    await _generator.start();
+  }
   return _generator;
 }
 
