@@ -80,11 +80,11 @@ export async function cleanup_mock_dbs() {
   return Promise.all(deletes);
 }
 
-export async function start_server(enable_auth=false) {
+export async function start_server(enable_auth=false, queue_limit=3) {
   console.log('starting server');
   const main = await import('./main.mjs');
   main.CONFIG.auth.enabled = enable_auth;
-  main.CONFIG.queue_limit = 3;
+  main.CONFIG.queue_limit = queue_limit;
   _server = main.default;
   return main;
 }

@@ -322,6 +322,15 @@ app.get('/new_interaction_updates', require_sub('generator', 'admin'), async (re
   }
 });
 
+app.get('/waiting_interactions', require_sub('generator', 'admin'), async (req, res) => {
+  try {
+    const ints = await db.get_waiting_interactions();
+    res.json(ints);
+  } catch (e) {
+    other_error(res, e);
+  }
+});
+
 app.get('/update_interaction', require_sub('generator', 'admin'), async (req, res) => {
   if (!req.query.id) {
     res.status(400).json({error: 'id missing'});

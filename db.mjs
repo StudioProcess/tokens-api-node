@@ -20,6 +20,9 @@ const interactions_design = {
     "queue_size": {
       "map": "function (doc) { if (doc.status == 'new' | doc.status == 'waiting') emit(); }",
       "reduce": "_count"
+    },
+    "waiting": {
+      "map": "function(doc) { if (doc.status == 'waiting') emit(); }",
     }
   },
   "language": "javascript"
@@ -544,4 +547,23 @@ export async function get_new_interaction_updates(since=0, timeout=60000) {
     requested_at: doc.requested_at,
     deposited_at: doc.deposited_at,
   };
+}
+
+// Returns: [ {id, color, keywords, requested_at, deposited_at}, ... ] 
+export async function get_waiting_interactions() {
+    const res = await request('get', `/${DB.interactions_db}/_design/tfcc/_view/waiting`, {
+      searchParams: {
+        include_docs: true
+      }
+    });
+    let rows = res.body.rows.map(x => {
+      return {
+        id: x.doc._id,
+        color: x.doc.color,
+        keywords: x.doc.keywords,
+        requested_at: x.doc.requested_at,
+        deposited_at: x.doc.deposited_at,
+      };
+    });
+    return rows;
 }

@@ -26,6 +26,7 @@ The list of routes is grouped by access rights. In order to access some routes, 
 	* [GET /interaction_updates](#get-interaction_updates)
 * `generator`
 	* [GET /new_interaction_updates](#get-new_interaction_updates)
+	* [GET /waiting_interactions](#get-waitings_interactions)
 	* [GET /update_interaction](#get-update_interaction)
 	* [PUT /token](#put-token)
 * `admin`
@@ -185,6 +186,24 @@ Returns:
 
 Errors:
 * 504 Timeout reached
+
+
+### **GET /waiting_interactions**
+Allows the token generator (installation) to check for still waiting interactions on startup. This can occur when the generator has updated an interaction with a queue position, but is quit or crashed before the token is generated.
+
+Query parameters:
+* None
+
+Returns:
+* `[ { id, seq, color, keywords, requested_at, deposited_at }, ... ]`: Array of waiting interactions (can be empty)
+	* `id`: The interaction id
+	* `color`: RGB hex color code, e.g. `#70c5ff`
+	* `keywords`: Array of three strings
+	* `requested_at`: ISO-timestamp of when the interaction was requested
+	* `deposited_at`: ISO-timestamp of when the interaction was deposited
+
+Errors:
+* None
 
 
 ### **GET /update_interaction**
