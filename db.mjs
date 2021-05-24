@@ -22,7 +22,7 @@ const interactions_design = {
       "reduce": "_count"
     },
     "waiting": {
-      "map": "function(doc) { if (doc.status == 'waiting') emit(); }",
+      "map": "function(doc) { if (doc.status == 'waiting') emit(doc.deposited_at); }", // sort by deposition timestamp
     }
   },
   "language": "javascript"
@@ -550,20 +550,30 @@ export async function get_new_interaction_updates(since=0, timeout=60000) {
 }
 
 // Returns: [ {id, color, keywords, requested_at, deposited_at}, ... ] 
-export async function get_waiting_interactions() {
-    const res = await request('get', `/${DB.interactions_db}/_design/tfcc/_view/waiting`, {
-      searchParams: {
-        include_docs: true
-      }
-    });
-    let rows = res.body.rows.map(x => {
-      return {
-        id: x.doc._id,
-        color: x.doc.color,
-        keywords: x.doc.keywords,
-        requested_at: x.doc.requested_at,
-        deposited_at: x.doc.deposited_at,
-      };
-    });
-    return rows;
+export async function get_waiting_interactions(since = null) {
+  if (since) {
+    since = Date.parse(since);
+    if (Number.isNaN(since)) {
+      throw { 'error': 'invalid timestamp' };
+    }
+    since = (new Date(since)).toISOString();
+  } else {
+    since = '0';
+  }
+  const res = await request('get', `/${DB.interactions_db}/_design/tfcc/_view/waiting`, {
+    searchParams: {
+      include_docs: true,
+      start_key: `"${since}"`,
+    }
+  });
+  let rows = res.body.rows.map(x => {
+    return {
+      id: x.doc._id,
+      color: x.doc.color,
+      keywords: x.doc.keywords,
+      requested_at: x.doc.requested_at,
+      deposited_at: x.doc.deposited_at,
+    };
+  });
+  return rows;
 }

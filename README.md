@@ -26,7 +26,7 @@ The list of routes is grouped by access rights. In order to access some routes, 
 	* [GET /interaction_updates](#get-interaction_updates)
 * `generator`
 	* [GET /new_interaction_updates](#get-new_interaction_updates)
-	* [GET /waiting_interactions](#get-waitings_interactions)
+	* [GET /waiting_interactions](#get-waiting_interactions)
 	* [GET /update_interaction](#get-update_interaction)
 	* [PUT /token](#put-token)
 * `admin`
@@ -183,6 +183,8 @@ Returns:
 	* `seq`: Update sequence number. Use with the `since` parameter in a subsequent request to get the next update.
 	* `color`: RGB hex color code, e.g. `#70c5ff`
 	* `keywords`: Array of three strings
+	* `requested_at`: ISO-timestamp of when the interaction was requested
+	* `deposited_at`: ISO-timestamp of when the interaction was deposited
 
 Errors:
 * 504 Timeout reached
@@ -192,10 +194,10 @@ Errors:
 Allows the token generator (installation) to check for still waiting interactions on startup. This can occur when the generator has updated an interaction with a queue position, but is quit or crashed before the token is generated.
 
 Query parameters:
-* None
+* `since`: Optional timestamp string (e.g. ISO, parsed with `Date.parse()`). Only interactions deposited on or after that time will be returned. Omit or set to 0 to retrieve all waiting interactions.
 
 Returns:
-* `[ { id, seq, color, keywords, requested_at, deposited_at }, ... ]`: Array of waiting interactions (can be empty)
+* `[ { id, color, keywords, requested_at, deposited_at }, ... ]`: Array of waiting interactions (can be empty)
 	* `id`: The interaction id
 	* `color`: RGB hex color code, e.g. `#70c5ff`
 	* `keywords`: Array of three strings
@@ -203,7 +205,7 @@ Returns:
 	* `deposited_at`: ISO-timestamp of when the interaction was deposited
 
 Errors:
-* None
+* 400 `{error: 'invalid timestamp'}` if `since` parameter couldn't be parsed
 
 
 ### **GET /update_interaction**

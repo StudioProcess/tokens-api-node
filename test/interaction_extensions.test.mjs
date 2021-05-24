@@ -193,3 +193,178 @@ tap.test('retrieve interrupted (waiting) interactions', async t => {
   t.equal(res.statusCode, 200);
   t.same(res.body, []);
 });
+
+
+tap.test('deposition order', async t => {
+  // interaction 1
+  let res1 = await got('/request_interaction', {
+    responseType: 'json',
+  });
+  t.equal(res1.statusCode, 200);
+  // interaction 2
+  let res2 = await got('/request_interaction', {
+    responseType: 'json',
+  });
+  t.equal(res2.statusCode, 200);
+  // interaction 3
+  let res3 = await got('/request_interaction', {
+    responseType: 'json',
+  });
+  t.equal(res3.statusCode, 200);
+  
+  // deposit in different order (2,1,3)
+  let res2x = await got('/deposit_interaction', {
+    responseType: 'json',
+    searchParams: { id: res2.body.id, keywords: 'x,y,z' }
+  });
+  t.equal(res2x.statusCode, 200);
+  
+  let res1x = await got('/deposit_interaction', {
+    responseType: 'json',
+    searchParams: { id: res1.body.id, keywords: 'a,b,c' }
+  });
+  t.equal(res1x.statusCode, 200);
+  let res3x = await got('/deposit_interaction', {
+    responseType: 'json',
+    searchParams: { id: res3.body.id, keywords: 'u,v,w' }
+  });
+  t.equal(res3x.statusCode, 200);
+  
+  // update to waiting status
+  res1x = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res1.body.id, queue_position: 1 }
+  });
+  t.equal(res1x.statusCode, 200);
+  res2x = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res2.body.id, queue_position: 2 }
+  });
+  t.equal(res2x.statusCode, 200);
+  res3x = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res3.body.id, queue_position: 3 }
+  });
+  t.equal(res3x.statusCode, 200);
+  
+  let res = await got('/waiting_interactions', {
+    responseType: 'json'
+  });
+  t.equal(res.statusCode, 200);
+  t.equal(res.body.length, 3);
+  t.match(res.body, [res2.body, res1.body, res3.body]);
+  
+  // complete all interaction
+  res1x = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res1.body.id, token_id: tokens[0].id }
+  });
+  t.equal(res1x.statusCode, 200);
+  res2x = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res2.body.id, token_id: tokens[1].id }
+  });
+  t.equal(res2x.statusCode, 200);
+  res3x = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res3.body.id, token_id: tokens[2].id }
+  });
+  t.equal(res3x.statusCode, 200);
+  res = await got('/waiting_interactions', {
+    responseType: 'json'
+  });
+  t.equal(res.statusCode, 200);
+  t.same(res.body, []);
+});
+
+
+tap.only('retrieve waiting with timestamp', async t => {
+  // interaction 1
+  let res1 = await got('/request_interaction', {
+    responseType: 'json',
+  });
+  t.equal(res1.statusCode, 200);
+  let ts1 = util.timestamp();
+  let res1x = await got('/deposit_interaction', {
+    responseType: 'json',
+    searchParams: { id: res1.body.id, keywords: 'a,b,c' }
+  });
+  t.equal(res1x.statusCode, 200);
+  res1x = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res1.body.id, queue_position: 1 }
+  });
+  t.equal(res1x.statusCode, 200);
+  // interaction 2
+  let res2 = await got('/request_interaction', {
+    responseType: 'json',
+  });
+  t.equal(res2.statusCode, 200);
+  let ts2 = util.timestamp();
+  let res2x = await got('/deposit_interaction', {
+    responseType: 'json',
+    searchParams: { id: res2.body.id, keywords: 'x,y,z' }
+  });
+  t.equal(res2x.statusCode, 200);
+  res1x = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res2.body.id, queue_position: 2 }
+  });
+  t.equal(res1x.statusCode, 200);
+  // interaction 3
+  let res3 = await got('/request_interaction', {
+    responseType: 'json',
+  });
+  t.equal(res3.statusCode, 200);
+  let ts3 = util.timestamp();
+  let res3x = await got('/deposit_interaction', {
+    responseType: 'json',
+    searchParams: { id: res3.body.id, keywords: 'u,v,w' }
+  });
+  t.equal(res3x.statusCode, 200);
+  res1x = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res3.body.id, queue_position: 3 }
+  });
+  t.equal(res1x.statusCode, 200);
+  
+  let res = await got('/waiting_interactions', {
+    responseType: 'json',
+    searchParams: { since: ts3 }
+  });
+  t.equal(res.statusCode, 200);
+  t.match(res.body, [res3.body]);
+  
+  res = await got('/waiting_interactions', {
+    responseType: 'json',
+    searchParams: { since: ts2 }
+  });
+  t.equal(res.statusCode, 200);
+  t.match(res.body, [res2.body, res3.body]);
+  
+  res = await got('/waiting_interactions', {
+    responseType: 'json',
+    searchParams: { since: ts1 }
+  });
+  t.equal(res.statusCode, 200);
+  t.match(res.body, [res1.body, res2.body, res3.body]);
+  
+  res = await got('/waiting_interactions', {
+    responseType: 'json',
+    searchParams: { since: '2021-05-01' }
+  });
+  t.equal(res.statusCode, 200);
+  t.match(res.body, [res1.body, res2.body, res3.body]);
+  
+  try {
+    res = await got('/waiting_interactions', {
+      responseType: 'json',
+      searchParams: { since: 'xyz' }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response.body, {'error': 'invalid timestamp'});
+  }
+  
+});
+

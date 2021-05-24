@@ -324,9 +324,13 @@ app.get('/new_interaction_updates', require_sub('generator', 'admin'), async (re
 
 app.get('/waiting_interactions', require_sub('generator', 'admin'), async (req, res) => {
   try {
-    const ints = await db.get_waiting_interactions();
+    const ints = await db.get_waiting_interactions(req.query.since);
     res.json(ints);
   } catch (e) {
+    if (e.error == 'invalid timestamp') {
+      res.status(400).json(e);
+      return;
+    }
     other_error(res, e);
   }
 });
