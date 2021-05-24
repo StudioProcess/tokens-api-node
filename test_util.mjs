@@ -12,6 +12,7 @@ export let _generator;
 export const match_id = /[0-9a-f]{32}/; // 32 hex digits
 export const match_short_id = /[0-9A-Za-z]{7,32}/; // 7 or more, full alphabet
 export const match_color = /#[0-9a-f]{6}/; // hex color
+export const match_timestamp = /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z/ // eg. 2021-05-23T17:56:54.223Z
 
 export async function setup_mock_db() {
   console.log('setup mock db:')

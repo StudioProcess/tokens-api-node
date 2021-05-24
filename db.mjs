@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import got from 'got';
-import { short_id, sleep, rnd, id_in, id_out } from './util.mjs';
+import { short_id, sleep, rnd, id_in, id_out, timestamp } from './util.mjs';
 
 const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 export const DB = JSON.parse(readFileSync(CONFIG.db_config));
@@ -411,9 +411,12 @@ export async function request_interaction() {
   const color = colors[color_idx];
   color_idx = (color_idx + 1) % colors.length;
   
+  const ts = timestamp();
+  
   const res = await request('post', `/${DB.interactions_db}`, {
     json: { 
       'status': 'incomplete',
+      'requested_at': ts,
       'color': color,
     }
   });
@@ -421,6 +424,7 @@ export async function request_interaction() {
   return {
     id: res.body.id,
     color,
+    requested_at: ts, 
   };
 }
 
@@ -467,6 +471,7 @@ export async function deposit_interaction(id, keywords) {
   let int = res.body;
   int.status = 'new';
   int.keywords = keywords;
+  int.deposited_at = timestamp();
   res = await request('post', `/${DB.interactions_db}`, {json: int});
   return '';
 }
@@ -532,6 +537,8 @@ export async function get_new_interaction_updates(since=0, timeout=60000) {
     id: doc._id,
     seq: result.seq,
     color: doc.color,
-    keywords: doc.keywords
+    keywords: doc.keywords,
+    requested_at: doc.requested_at,
+    deposited_at: doc.deposited_at,
   };
 }
