@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import got from 'got';
 import { short_id, sleep, rnd, id_in, id_out, timestamp } from './util.mjs';
 
-const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
+export const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 export const DB = JSON.parse(readFileSync(CONFIG.db_config));
 export const COLORS = JSON.parse(readFileSync(CONFIG.colors_config));
 
@@ -474,6 +474,10 @@ export async function deposit_interaction(id, keywords) {
   let int = res.body;
   if (int.status != 'incomplete') {
     throw { error: 'already deposited' };
+  }
+  const age_secs = (Date.now() - Date.parse(int.requested_at)) / 1000; // age in seconds
+  if (age_secs > CONFIG.deposit_max_age) {
+    throw { error: 'expired' };
   }
   int.status = 'new';
   int.keywords = keywords;

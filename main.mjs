@@ -12,6 +12,7 @@ export const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 const JWT_SECRET = process.env.JWT_SECRET || readFileSync(CONFIG.auth.jwt_secret, {encoding:'utf8'}).trim();
 const PACKAGE_JSON = JSON.parse(readFileSync('./package.json'));
 const GIT_SHA = git_sha();
+export const DB = db; // for testing. make db module accessible, so config can be changed
 
 const app = express();
 
@@ -280,7 +281,10 @@ app.get('/deposit_interaction', require_sub('exhibition', 'admin'), async (req, 
     if (e.error == 'not found') {
       res.status(404).json(e);
       return;
-    } else if (e.error = 'already deposited') {
+    } else if (e.error == 'already deposited') {
+      res.status(400).json(e);
+      return;
+    } else if (e.error == 'expired') {
       res.status(400).json(e);
       return;
     }

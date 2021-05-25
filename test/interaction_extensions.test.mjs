@@ -4,13 +4,14 @@ import * as util from '../util.mjs';
 import * as test_util from '../test_util.mjs';
 import { request as got } from '../test_util.mjs';
 
-let tokens = [];  
+let tokens = [];
+let main;
 
 // setup/teardown mock databases
 tap.before(async () => {
   tokens = await test_util.setup_mock_db();
   // start server
-  await test_util.start_server(false, 5);
+  main = await test_util.start_server(false, 5);
 });
 tap.teardown(async () => {
   test_util.teardown_mock_db();
@@ -71,6 +72,52 @@ tap.test('depositing again', async t => {
       body: {error: 'already deposited'}
     }, 'already deposited');
   }
+});
+
+
+tap.test('depositing too late', async t => {
+  const max_age_bak = main.DB.CONFIG.deposit_max_age;
+  main.DB.CONFIG.deposit_max_age = 0.5; // half a second
+  
+  let res1 = await got('/request_interaction', {
+    responseType: 'json',
+  });
+  t.equal(res1.statusCode, 200);
+  let res1x = await got('/deposit_interaction', {
+    responseType: 'json',
+    searchParams: { id: res1.body.id, keywords: 'a,b,c' }
+  });
+  t.equal(res1x.statusCode, 200);
+  
+  let res2 = await got('/request_interaction', {
+    responseType: 'json',
+  });
+  t.equal(res2.statusCode, 200);
+  await util.sleep(500);
+  try {
+    await got('/deposit_interaction', {
+      responseType: 'json',
+      searchParams: { id: res2.body.id, keywords: 'a,b,c' }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.match(e.response, {
+      statusCode: 400,
+      body: {error: 'expired'}
+    }, 'expired');
+  }
+  // complete interactions to clean up
+  let res = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res1.body.id, token_id: tokens[0].id }
+  });
+  t.equal(res.statusCode, 200);
+  res = await got('/update_interaction', {
+    responseType: 'json',
+    searchParams: { id: res2.body.id, token_id: tokens[0].id }
+  });
+  t.equal(res.statusCode, 200);
+  main.DB.CONFIG.deposit_max_age = max_age_bak;
 });
 
 
@@ -278,7 +325,7 @@ tap.test('deposition order', async t => {
 });
 
 
-tap.only('retrieve waiting with timestamp', async t => {
+tap.test('retrieve waiting with timestamp', async t => {
   // interaction 1
   let res1 = await got('/request_interaction', {
     responseType: 'json',
@@ -365,6 +412,4 @@ tap.only('retrieve waiting with timestamp', async t => {
   } catch (e) {
     t.match(e.response.body, {'error': 'invalid timestamp'});
   }
-  
 });
-

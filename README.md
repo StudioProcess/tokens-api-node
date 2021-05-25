@@ -139,6 +139,7 @@ Errors:
 * 400 `{error: 'keywords missing'}`
 * 400 `{error: 'exactly three keywords needed'}`
 * 400 `{error: 'already deposited'}`
+* 400 `{error: 'expired' }` if too much time has passed since [GET /request_interaction](#get-request_interaction)
 * 404 `{error: 'not found'}`
 
 

@@ -8,8 +8,9 @@
   },
   "db_config": "./config/db.config.json",
   "colors_config": "./config/colors.config.json",
-  "page_limit": 1000,
-  "queue_limit": 10,
+  "page_limit": 250,
+  "queue_limit": 6,
+  "deposit_max_age": 1800,
   "auth": {
     "enabled": true,
     "jwt_secret": "./config/auth.secret",
