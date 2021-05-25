@@ -65,7 +65,7 @@ export function random_svg(custom_attr_str='') {
     }
     return out;
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:tfcc="https://tokensforclimate.care" viewBox="0 0 1000 1000" style="stroke:black; stroke-width:${sw}; fill:none;"${custom_attr_str ? ' ' + custom_attr_str : ''}>
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:tfcc="https://tokensforclimate.care" viewBox="0 0 1000 1000" style="stroke:black; stroke-width:${sw}; fill:none;"${custom_attr_str ? ' ' + custom_attr_str : ''}>
   <circle cx="500" cy="500" r="${r}"/>
 ${lines(rndint(1,5))}
 </svg>`;
