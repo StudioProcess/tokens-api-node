@@ -68,7 +68,7 @@ if (args[0] == 'add') {
     usage();
   }
   const arg = args.slice(1).join(','); // join all remaining args
-  const ids = arg.split(',').filter(str => str != '').map(str => str.trim());
+  const ids = arg.split(',').filter(str => str != '').map(str => str.trim().toLowerCase());
   rl.question(`Are you sure you want to delete ${ids.length} token(s): \n${ids.join('\n')}\n? `, async response => {
     if (!response.toLowerCase() == 'yes') {
       console.log('Aborting.');
