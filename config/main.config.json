@@ -21,6 +21,10 @@
       "admin": 1618911347
     }
   },
+  "png": {
+    "render_size": 2048,
+    "background_color": "white"
+  },
   "cors": {
     "origin": "*"
   }

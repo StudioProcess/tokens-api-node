@@ -7,6 +7,7 @@ import jwt from 'express-jwt';
 import cors from 'cors';
 import * as db from './db.mjs';
 import { pick, sleep, git_sha } from './util.mjs';
+import sharp from 'sharp';
 
 export const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 const JWT_SECRET = process.env.JWT_SECRET || readFileSync(CONFIG.auth.jwt_secret, {encoding:'utf8'}).trim();
@@ -180,6 +181,38 @@ app.get('/svg', async (req, res) => {
       res.type('image/svg+xml');
     }
     res.send(token.svg);
+  } catch (e) {
+    // 404 object not found
+    if (e.response?.statusCode == 404) {
+      res.status(404).json({error: 'token not found'}) ;
+      return;
+    }
+    other_error(res, e);
+  }
+});
+
+app.get('/png', async (req, res) => {
+  // no id (null, undefined, '')
+  if (!req.query.id) {
+    res.status(400).json({error: 'id missing'});
+    return;
+  }
+  
+  try {
+    const token = await db.get_single_token(req.query.id);
+    let sharp_obj = await sharp( Buffer.from(token.svg) )
+      .resize(CONFIG.png.render_size, CONFIG.png.render_size);
+    if ( !['', 'none', 'transparent'].includes(CONFIG.png.background_color) )
+      sharp_obj = await sharp_obj.flatten({background: CONFIG.png.background_color})
+    const png_data = await sharp_obj.png().toBuffer();
+
+    if (req.query.download != undefined) {
+      res.attachment(`token-${token.id}.png`);
+      res.type('application/octet-stream');
+    } else {
+      res.type('image/png');
+    }
+    res.send(png_data);
   } catch (e) {
     // 404 object not found
     if (e.response?.statusCode == 404) {

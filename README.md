@@ -18,6 +18,7 @@ The list of routes is grouped by access rights. In order to access some routes, 
 * (no auth needed)
 	* [GET /](#get-)
 	* [GET /svg](#get-svg)
+	* [GET /png](#get-png)
 	* [GET /token](#get-token)
 	* [GET /tokens](#get-tokens)
 * `exhibition`
@@ -57,6 +58,22 @@ Query parameters:
 Returns:
 * SVG text of the token. Response has content-type `image/svg+xml`.
 * If `download` is used, response has content-type `application/octet-stream` and content-disposition `attachment; filename="token-<id>.svg"` which usually triggers a direct download in the browser.
+
+Errors:
+* 400 `{error: 'id missing'}`
+* 404 `{error: 'token not found'}`
+
+
+### **GET /png**
+Retrieve PNG representation of a single token. Can be used to provide direct-download links. The token is rendered to PNG on demand.
+
+Query parameters:
+* `id`: The token id.
+* `download`: Optional. When present (can be set to empty string) triggers a direct download of the PNG.
+
+Returns:
+* PNG render of the token. Response has content-type `image/png`.
+* If `download` is used, response has content-type `application/octet-stream` and content-disposition `attachment; filename="token-<id>.png"` which usually triggers a direct download in the browser.
 
 Errors:
 * 400 `{error: 'id missing'}`
