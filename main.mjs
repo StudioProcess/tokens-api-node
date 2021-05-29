@@ -6,7 +6,7 @@ import express from 'express';
 import jwt from 'express-jwt';
 import cors from 'cors';
 import * as db from './db.mjs';
-import { pick, sleep, git_sha } from './util.mjs';
+import { pick, sleep, git_sha, svg_width } from './util.mjs';
 import sharp from 'sharp';
 
 export const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
@@ -200,8 +200,11 @@ app.get('/png', async (req, res) => {
   
   try {
     const token = await db.get_single_token(req.query.id);
-    let sharp_obj = await sharp( Buffer.from(token.svg) )
-      .resize(CONFIG.png.render_size, CONFIG.png.render_size);
+    
+    let density = 72;
+    const width = svg_width(token.svg); // try to extract svg width from viewbox attribute
+    if (width) density = CONFIG.png.render_size / width * 72;
+    let sharp_obj = await sharp( Buffer.from(token.svg), {density} );
     if ( !['', 'none', 'transparent'].includes(CONFIG.png.background_color) )
       sharp_obj = await sharp_obj.flatten({background: CONFIG.png.background_color})
     const png_data = await sharp_obj.png().toBuffer();

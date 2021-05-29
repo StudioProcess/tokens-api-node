@@ -71,6 +71,26 @@ ${lines(rndint(1,5))}
 </svg>`;
 }
 
+
+// https://github.com/lukem512/extract-svg-viewbox/blob/master/index.js
+export function extract_viewbox(svgStr) {
+  const viewBoxRegex = /<svg .*?viewBox=["'](-?[\d\.]+[, ]+-?[\d\.]+[, ][\d\.]+[, ][\d\.]+)["']/;
+  const matches = svgStr.match(viewBoxRegex);
+  return matches && matches.length >= 2 ? matches[1] : null;
+}
+
+// try to extract svg width from viewbox attribute
+export function svg_width(svg_text) {
+  const viewbox = extract_viewbox(svg_text);
+  if (!viewbox) return null;
+  const values = viewbox.split(/[, ]/);
+  if (values.length < 3) return null;
+  const width = Number.parseInt(values[2]);
+  if (Number.isNaN(width)) return null;
+  return width;
+}
+
+
 /**
  * Async sleep
  * Note: Not defined async (no need, since it doesn't use await)
