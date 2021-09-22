@@ -7,3 +7,6 @@ venv
 # secret config
 config/db.config.json
 config/auth.secret
+
+.tmp/
+export-*

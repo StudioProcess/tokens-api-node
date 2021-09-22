@@ -2,6 +2,7 @@ import { inspect as _inspect } from 'util';
 import crypto from 'crypto';
 import child_process from 'child_process';
 import fs from 'fs';
+import path from 'path';
 
 /**
  * Printable strings from object
@@ -221,4 +222,30 @@ export function id_in(id) {
  */
 export function id_out(id) {
   return unpad_id(id.toLowerCase());
+}
+
+
+export function mkdir(dir) {
+  if ( !fs.existsSync(dir) ) fs.mkdirSync(dir, { recursive: true });
+}
+
+export function rmdir(dir) {
+  if ( fs.existsSync(dir) ) fs.rmdirSync(dir, { recursive: true });
+}
+
+export function save_text(path, text) {
+  fs.writeFileSync(path, text, 'utf8');
+}
+
+export function save_json(path, obj) {
+  save_text(path, JSON.stringify(obj, null, 2));
+}
+
+export function zip(folder, dest_path) {
+  const dest_dir = path.dirname(dest_path);
+  const dest_name = path.basename(dest_path);
+  try {
+    child_process.execSync(`zip -r ${dest_name} .`, { cwd: folder });
+    child_process.execSync(`mv ${folder}/${dest_name} ${dest_dir}`);
+  } catch {}
 }

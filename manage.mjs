@@ -18,6 +18,8 @@ const rl = readline.createInterface({
 const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
 const DB = JSON.parse(readFileSync(CONFIG.db_config));
 const KEYWORDS = JSON.parse(readFileSync('./config/keywords.json'));
+const EXPORT_BATCH = 1000;
+const EXPORT_TMP_DIR = '.tmp/';
 
 let args = process.argv.slice(2); // 0 .. node, 1 .. module
 args = args.map( str => str.toLowerCase() );
@@ -33,6 +35,7 @@ function usage() {
   console.log(`Usage: ${script} 
     add <num>
     delete <id> [ <id> ... ]
+    export
     wipe-tokens
     wipe-interactions
     wipe-all`);
@@ -85,6 +88,36 @@ if (args[0] == 'add') {
       }
     }
   });
+} else if (args[0] == 'export') {
+    const json_dir = EXPORT_TMP_DIR + '/json';
+    const svg_dir  = EXPORT_TMP_DIR + '/svg';
+    util.rmdir(json_dir); util.rmdir(svg_dir);
+    util.mkdir(json_dir); util.mkdir(svg_dir);
+    
+    try {
+      let res = null;
+      while (!res || res.next != null) {
+        if (!res) {
+          res = await db.get_tokens(0, null, null, EXPORT_BATCH);
+        } else {
+          res = await db.get_tokens(null, res.next, null, EXPORT_BATCH);
+        }
+        // console.log(res);
+        console.log(`retrieved batch of ${res.rows.length} tokens...`);
+        for (let token of res.rows) {
+          util.save_json( `${json_dir}/${token.id}.json`, token);
+          util.save_text( `${svg_dir}/${token.id}.svg`, token.svg);
+        }
+      }
+      let ts = util.timestamp().replace(/[Z:]/g, '').replace(/[T\.]/g, '-');
+      let zipfile = `export-${ts}.zip`
+      util.zip(EXPORT_TMP_DIR, zipfile);
+      util.rmdir(EXPORT_TMP_DIR);
+      console.log(`created ${zipfile}`);
+    } catch (e) {
+      console.log('error: ', e.response.body);
+    }
+    exit();
 } else if (args[0] == 'wipe-all') {
   const challenge = os.hostname() + '-all-' + util.rnd_hash(4).toUpperCase();
   rl.question(`WARNING: You are about to wipe ALL TOKENS and INTERACTIONS from the database on ${os.hostname()}! To confirm type \'${challenge}\': `, async response => {
