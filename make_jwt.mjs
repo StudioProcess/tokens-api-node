@@ -12,6 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET || readFileSync(CONFIG.auth.jwt_secret
 
 /* 
   date string examples:
+  '2021-05-17'                // uses UTC 00:00:00
   '2021-05-17 00:00:00'       // uses local timezone
   '2021-05-17 00:00:00 GMT+1' // explicit timezone
   '2021-05-17 00:00:00 GMT'
@@ -33,6 +34,7 @@ export function verify(token) {
 }
 
 // subject, not before, expiration
+// nbf, exp: (both optional) date strings to be parsed with new Date() (see to_unix_seconds())
 export function make(sub, nbf = null, exp = null) {
   const payload = {
     sub,
@@ -47,9 +49,10 @@ export function make(sub, nbf = null, exp = null) {
   return sign(payload);
 }
 
-export function save_qr(jwt, base_url='', nbf_string=null, exp_string=null) {
+// Note: nbf_string, exp_string: date strings only used in filename of QR code SVG.
+export function save_qr(jwt, base_url='', nbf_string=null, exp_string=null, filename_prefix='qr ') {
   const payload = verify(jwt);
-  let f = 'qr ';
+  let f = filename_prefix;
   if (payload.sub != undefined) f += payload.sub;
   if (payload.nbf != undefined) f += ' from ' + (nbf_string || payload.nbf);
   if (payload.exp != undefined) f += ' to ' + (exp_string || payload.nbf);
@@ -61,6 +64,8 @@ export function save_qr(jwt, base_url='', nbf_string=null, exp_string=null) {
   return url;
 }
 
+
+// if run as script
 if ( url.fileURLToPath(import.meta.url) === process.argv[1] ) {
   let args = process.argv.slice(2);
   args = args.map(str => str.trim());
@@ -87,6 +92,8 @@ if ( url.fileURLToPath(import.meta.url) === process.argv[1] ) {
       console.log(e);
     }
   } else {
-    console.log(`Usage: ./make_jwt.mjs <subject> [<not_before>] [<expiration>] [--qr <base_url>]`)
+    console.log(`Usage: ./make_jwt.mjs <subject> [ <not_before> [<expiration>] ] [--qr <base_url>]`);
+console.log(`Example: 
+  ./make_jwt.mjs exhibition '2021-10-13 00:00:00' '2021-10-23 00:00:00' --qr 'https://tokensforclimate.care/generate/?auth='`);
   }
 }
