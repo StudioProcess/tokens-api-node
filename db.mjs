@@ -12,10 +12,6 @@ export let color_idx = 0;
 
 // design doc for interactions db
 const interactions_design = {
-  "filters": {
-    "new": "function(doc, req) { return doc.status == 'new'; }",
-    "updates": "function(doc, req) { return doc._id == req.query.doc_id && (doc.status == 'waiting' || doc.status == 'done'); }"
-  },
   "views": {
     "queue_size": {
       "map": "function (doc) { if (doc.status == 'new' | doc.status == 'waiting') emit(); }",
@@ -488,14 +484,19 @@ export async function deposit_interaction(id, keywords) {
 
 // Returns: { id, seq, queue_position, token_id? }
 export async function get_single_interaction_updates(id, since=0, timeout=60000) {
-  const res = await request('get', `/${DB.interactions_db}/_changes`, {
+  const res = await request('post', `/${DB.interactions_db}/_changes`, {
     searchParams: {
       feed: 'longpoll',
-      filter: 'tfcc/updates',
-      doc_id: id,
+      filter: '_selector',
       include_docs: true,
       since,
       timeout
+    },
+    json: {
+      'selector': {
+        '_id': id,
+        '$or': [{ 'status': 'waiting' }, { 'status': 'done' }]
+      }
     }
   });
   // the request will return after 60 seconds (max) with empty results
@@ -528,14 +529,17 @@ export async function update_interaction(id, queue_position, token_id=null) {
 }
 
 // Returns: { id, seq, color, keywords }
-export async function get_new_interaction_updates(since=0, timeout=60000) {
-  const res = await request('get', `/${DB.interactions_db}/_changes`, {
+export async function get_new_interaction_updates(since=0, timeout=60000) {  
+  const res = await request('post', `/${DB.interactions_db}/_changes`, {
     searchParams: {
       feed: 'longpoll',
-      filter: 'tfcc/new',
+      filter: '_selector',
       include_docs: true,
       since,
       timeout
+    },
+    json: {
+      'selector': { 'status': 'new' }
     }
   });
   // the request will return after 60 seconds (max) with empty results
