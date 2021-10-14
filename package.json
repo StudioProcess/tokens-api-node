@@ -1,6 +1,6 @@
 {
   "name": "tokens-api-node",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tokens for Climate Care – Web API – https://tokensforclimate.care",
   "private": true,
   "main": "main.mjs",
