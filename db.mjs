@@ -31,6 +31,13 @@ const interactions_design = {
   
   interaction status progression:
   incomplete -> new -> waiting -> done
+  
+  interaction lifecycle:
+  request_interaction() -> status: "incomplete"
+  deposit_interaction() -> status: "new"
+  update_interaction()  -> status: "waiting" (queue_position changes)
+  ...
+  update_interaction()  -> status: "done" (queue_position 0, token_id available)
 */
 
 
