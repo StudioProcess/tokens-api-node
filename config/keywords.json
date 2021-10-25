@@ -1,5 +1,5 @@
 [
-  "earth", "soil", "stone", "land",
+  "earth", "soil", "stone", "land", "solid",
   "wood", "forest", "tree", "wooden",
   "fossil", "oil", "coal", "carbon",
   "ice", "glacier", "frozen",
@@ -21,7 +21,7 @@
   "artificiality", "artificial", "synthetic", "unnatural",
   "nature", "environment", "natural", "unaffected", "environmental",
   "sustainability", "sustainable",
-  "wasefulness", "waste", "wasteful",
+  "wastefulness", "waste", "wasteful",
   "balance", "balanced",
   "community", "communal",
   "individual", "individuality", "individual",
