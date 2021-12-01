@@ -48,14 +48,15 @@ function usage() {
 if ( url.fileURLToPath(import.meta.url) === process.argv[1] ) {
   let args = process.argv.slice(2); // remove first two args (node binary, script path)
   args = args.map(str => str.trim());
-  console.log(args);
+  // console.log(args);
   
   if (args.length >= 1) {
     if (args[0] == '--single') {
       console.log('single');
       const from = args[1];
       const to = args[2];
-      make_qr(from, to);
+      let url = make_qr(from, to);
+      console.log(url);
     }
     else if (args[0] == '--daily') {
       console.log('daily');

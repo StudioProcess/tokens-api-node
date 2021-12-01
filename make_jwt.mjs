@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // make jwt tokens
 
-import { readFileSync } from 'fs';
+import { readFileSync, appendFileSync } from 'fs';
 import url from 'url';
 import jwt from 'jsonwebtoken';
 import { unix_seconds } from './util.mjs';
@@ -60,7 +60,11 @@ export function save_qr(jwt, base_url='', nbf_string=null, exp_string=null, file
   f = f.replace(/:/g, '-');
   f += '.svg';
   let url = base_url + jwt;
-  qrcode.toFile(f, url, {type:'svg'});
+  qrcode.toFile(f, url, {type:'svg'}, (err) => {
+    if (!err) {
+      appendFileSync(f, `<!--\n${url}\n-->\n`); // add url to svg (as comment)
+    }
+  });
   return url;
 }
 
