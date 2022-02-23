@@ -6,6 +6,10 @@
     ./make_qr.mjs --daily '2021-10-13' 47
     # no expiration:
     ./make_qr.mjs --single
+  used 2022-02:
+    # for exhibition at AIT
+    ./make_qr.mjs --single '2022-02-20 00:00' '2022-10-01 00:00'
+    
 */
 
 import url from 'url';

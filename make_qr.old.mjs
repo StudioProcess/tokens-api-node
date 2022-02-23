@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* 
   quick script to generate exihition qr codes
+  2021-05
 */
 import { make as make_jwt, save_qr } from './make_jwt.mjs';
 
