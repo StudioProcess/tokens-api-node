@@ -9,6 +9,10 @@
   used 2022-02:
     # for exhibition at AIT
     ./make_qr.mjs --single '2022-02-20 00:00' '2022-10-01 00:00'
+  used 2022-05:
+    # for swiss media design day talk
+    ./make_qr.mjs --single '2022-05-10 00:00' '2022-10-16 00:00'
+    ./make_qr.mjs --single '2022-05-10 00:00' '2022-10-23 00:00'
     
 */
 
