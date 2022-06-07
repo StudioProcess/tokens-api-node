@@ -101,6 +101,7 @@ export async function check_uuid_alg() {
     const alg = res.body;
     return alg == 'utc_random';
   } catch (e) {
+    if (e?.response.statusCode === 404) return false; // no uuids section or no algorithm defined at all
     throw e;
   }
 }
