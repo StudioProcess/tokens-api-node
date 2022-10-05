@@ -252,3 +252,12 @@ tap.test('check all routes', async t => {
   await check_route('get', '/waiting_interactions', ['generator', 'admin']);
   await check_route('get', '/update_interaction', ['generator', 'admin']);
 });
+
+tap.test('auth allowlist', async t => {
+  main.CONFIG.auth.allow = [ jwt.expired ];
+  let res = await got('/request_interaction', {
+    responseType: 'json',
+    headers: { 'Authorization': 'Bearer ' + jwt.expired }
+  });
+  t.equal(res.statusCode, 200, 'expired but on allowlist');
+});

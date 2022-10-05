@@ -28,6 +28,15 @@ function require_sub(...subs) {
     // handle jwt validation errors (not called if no error occurs)
     function (err, req, res, next) {
       if (err.name == 'UnauthorizedError') {
+        // check allowlist
+        if (CONFIG.auth.allow && req.headers.authorization) {
+            const auth = req.headers.authorization.match(/(?:Bearer )(.*)/)?.at(1); // extract encoded token
+            if (auth && CONFIG.auth.allow.includes(auth)) {
+                subs = []; // set required subs to none
+                next();
+                return;
+            }
+        }
         // ignore auth errors if auth is globally disabled or no subjects required
         if (CONFIG.auth.enabled === false || subs.length == 0) { 
           next(); 
