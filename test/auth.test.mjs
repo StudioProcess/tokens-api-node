@@ -254,10 +254,30 @@ tap.test('check all routes', async t => {
 });
 
 tap.test('auth allowlist', async t => {
+  try {
+    let res = await got('/request_interaction', {
+      responseType: 'json',
+      headers: { 'Authorization': 'Bearer ' + jwt.expired }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.notEqual(e.response.statusCode, 200, 'expired');
+  }
+  
   main.CONFIG.auth.allow = [ jwt.expired ];
   let res = await got('/request_interaction', {
     responseType: 'json',
     headers: { 'Authorization': 'Bearer ' + jwt.expired }
   });
   t.equal(res.statusCode, 200, 'expired but on allowlist');
+  
+  try {
+    let res = await got('/request_interaction', {
+      responseType: 'json',
+      headers: { 'Authorization': 'Bearer ' + jwt.expired.slice(0, -1) }
+    });
+    t.fail('should throw');
+  } catch (e) {
+    t.notEqual(e.response.statusCode, 200, 'invalid token');
+  }
 });
