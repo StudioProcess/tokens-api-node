@@ -30,7 +30,10 @@ function require_sub(...subs) {
       if (err.name == 'UnauthorizedError') {
         // check allowlist
         if (CONFIG.auth.allow && req.headers.authorization) {
-            const auth = req.headers.authorization.match(/(?:Bearer )(.*)/)?.at(1); // extract encoded token
+            // extract encoded token
+            let auth = req.headers.authorization.match(/(?:Bearer )(.*)/);
+            if (auth !== null) { auth = auth[1]; }
+            // check list
             if (auth && CONFIG.auth.allow.includes(auth)) {
                 subs = []; // set required subs to none
                 next();
