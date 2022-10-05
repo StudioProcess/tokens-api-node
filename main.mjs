@@ -35,7 +35,7 @@ function require_sub(...subs) {
             if (auth !== null) { auth = auth[1]; }
             // check list
             if (auth && CONFIG.auth.allow.includes(auth)) {
-                subs = []; // set required subs to none
+                res.auth = { allow: true };
                 next();
                 return;
             }
@@ -61,6 +61,8 @@ function require_sub(...subs) {
     },
     // no jwt errors, check subject
     function (req, res, next) {
+      // pass if on allowlist
+      if (res.auth && res.auth.allow === true) { next(); return; }
       // pass if auth is disabled or no subjects are required
       if (CONFIG.auth.enabled === false || subs.length == 0) { next(); return; }
       // check if token subject is one of the required subjects
