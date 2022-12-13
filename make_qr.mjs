@@ -16,6 +16,9 @@
   used 2022-11:
     # for fh salzburg gastvvortrag
     ./make_qr.mjs --single '2022-11-29 00:00' '2022-12-07 00:00'
+  used 2022-11:
+    # for supsi mendrisio
+    ./make_qr.mjs --single '2022-12-13 00:00' '2022-12-20 00:00'
 */
 
 import url from 'url';
