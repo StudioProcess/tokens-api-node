@@ -22,6 +22,9 @@
   used 2023-02:
     # for HSLU hochschule luzern (online talk)
     ./make_qr.mjs --single '2023-02-28 00:00' '2023-03-13 00:00'
+  used 2023-05:
+    # for Wix Tel Aviv
+    ./make_qr.mjs --single '2023-05-14 00:00' '2023-05-29 00:00'
 */
 
 import url from 'url';
