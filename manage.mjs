@@ -94,6 +94,9 @@ if (args[0] == 'add') {
     util.rmdir(json_dir); util.rmdir(svg_dir);
     util.mkdir(json_dir); util.mkdir(svg_dir);
     
+    let is_first_batch = true;
+    let pad_len = 32; // maximum pad length
+    
     try {
       let res = null;
       while (!res || res.next != null) {
@@ -102,12 +105,20 @@ if (args[0] == 'add') {
         } else {
           res = await db.get_tokens(null, res.next, null, EXPORT_BATCH);
         }
+        // determine pad length (first batch only)
+        if (is_first_batch) { 
+          if (res.rows.length > 0) {
+            pad_len = res.rows[0].id.length; // this is the latest token i.e. the longest
+          }
+        }
         // console.log(res);
         console.log(`retrieved batch of ${res.rows.length} tokens...`);
         for (let token of res.rows) {
-          util.save_json( `${json_dir}/${token.id}.json`, token);
-          util.save_text( `${svg_dir}/${token.id}.svg`, token.svg);
+          const id = token.id.toUpperCase().padStart(pad_len, '0');
+          util.save_json( `${json_dir}/${id}.json`, token);
+          util.save_text( `${svg_dir}/${id}.svg`, token.svg);
         }
+        is_first_batch = false;
       }
       let ts = util.timestamp().replace(/[Z:]/g, '').replace(/[T\.]/g, '-');
       let zipfile = `export-${ts}.zip`
