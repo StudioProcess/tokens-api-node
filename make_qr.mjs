@@ -25,6 +25,9 @@
   used 2023-05:
     # for Wix Tel Aviv
     ./make_qr.mjs --single '2023-05-14 00:00' '2023-05-29 00:00'
+  used 2023-09:
+    # for Forward Vienna 2023
+    ./make_qr.mjs --single '2023-09-29 00:00' '2023-10-16 00:00'
 */
 
 import url from 'url';
