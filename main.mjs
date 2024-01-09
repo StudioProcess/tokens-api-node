@@ -460,8 +460,30 @@ if (!design_docs_status) {
   await db.create_design_docs();
 }
 
+// close server, force after timeout is reached
+// timeout 0 means force immediately
+// timeout < 0 means no timeout, wait indefinitely
+async function close(server, connections, timeout = 0) {
+  const closed = new Promise(resolve => {
+    let timer = null;
+    if (timeout >= 0) {
+      timer = setTimeout(() => {
+        console.log('force closing connections.');
+        for (let socket of connections) { socket.destroy(); }
+        connections.clear();
+      }, timeout);
+    }
+    server.close(() => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
+  return closed;
+}
+
 // start server
 let server;
+const connections = new Set();
 if (CONFIG.https.enabled) {
   server = https.createServer({
     key: readFileSync(CONFIG.https.key),
@@ -470,6 +492,15 @@ if (CONFIG.https.enabled) {
 } else {
   server = http.createServer(app);
 }
+// maintain list of active connections (socket objects)
+server.on('connection', socket => {
+  connections.add(socket);
+  // console.log('connection added', `${socket.remoteAddress}:${socket.remotePort}`);
+  socket.on('close', () => {
+    connections.delete(socket);
+    // console.log('connection closed', `${socket.remoteAddress}:${socket.remotePort}`);
+  });
+});
 server.listen(CONFIG.port, CONFIG.host, () => {
   const secure = server instanceof https.Server;
   console.log(`${secure ? 'HTTPS ' : ''}Server running on ${server.address().address}:${server.address().port}`);
@@ -481,7 +512,7 @@ server.listen(CONFIG.port, CONFIG.host, () => {
 ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach(sig => process.on(sig, () => {
   console.log('signal:', sig);
   console.log('stopping.')
-  server.close();
+  close(server, connections, 3000); // force close open connections after 3s
 }));
 
 // reload certificate on signal
