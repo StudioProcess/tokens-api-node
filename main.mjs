@@ -470,9 +470,9 @@ if (CONFIG.https.enabled) {
 } else {
   server = http.createServer(app);
 }
-server.listen(CONFIG.port, () => {
+server.listen(CONFIG.port, CONFIG.host, () => {
   const secure = server instanceof https.Server;
-  console.log(`${secure ? 'HTTPS ' : ''}Server running on ${CONFIG.host}:${CONFIG.port}`);
+  console.log(`${secure ? 'HTTPS ' : ''}Server running on ${server.address().address}:${server.address().port}`);
   if (!secure) console.warn('WARNING: Server is not secure (HTTPS disbaled)');
   if (!CONFIG.auth.enabled) console.warn('WARNING: Authentication disabled');
 });
