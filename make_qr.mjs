@@ -28,6 +28,9 @@
   used 2023-09:
     # for Forward Vienna 2023
     ./make_qr.mjs --single '2023-09-29 00:00' '2023-10-16 00:00'
+  used 2024-01:
+    # for Forward Creatives
+    ./make_qr.mjs --single '2024-01-29 00:00' '2024-02-15 00:00'
 */
 
 import url from 'url';
