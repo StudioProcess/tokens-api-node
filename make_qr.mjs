@@ -31,6 +31,9 @@
   used 2024-01:
     # for Forward Creatives
     ./make_qr.mjs --single '2024-01-29 00:00' '2024-02-15 00:00'
+  used 2024-04:
+    # for Klimabiennale
+    ./make_qr.mjs --single '2024-04-05 00:00' '2024-08-01 00:00'
 */
 
 import url from 'url';
