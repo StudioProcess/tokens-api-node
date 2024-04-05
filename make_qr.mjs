@@ -53,7 +53,10 @@ export function make_qr(nbf=null, exp=null, filename_prefix='qr ', subject='exhi
   if (payload.nbf) console.log('nbf:', from_unix_seconds(payload.nbf));
   if (payload.exp) console.log('exp:', from_unix_seconds(payload.exp));
   console.log(jwt);
-  return save_qr(jwt, base_url, nbf, exp, filename_prefix);
+  save_qr(jwt, base_url, nbf, exp, filename_prefix, 'txt');
+  save_qr(jwt, base_url, nbf, exp, filename_prefix, 'transparent-png');
+  save_qr(jwt, base_url, nbf, exp, filename_prefix, 'png');
+  return save_qr(jwt, base_url, nbf, exp, filename_prefix, 'svg');
 }
 
 function usage() {

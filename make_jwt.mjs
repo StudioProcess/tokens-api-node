@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // make jwt tokens
 
-import { readFileSync, appendFileSync } from 'fs';
+import { readFileSync, appendFileSync, writeFileSync } from 'fs';
 import url from 'url';
 import jwt from 'jsonwebtoken';
 import { unix_seconds } from './util.mjs';
@@ -50,7 +50,7 @@ export function make(sub, nbf = null, exp = null) {
 }
 
 // Note: nbf_string, exp_string: date strings only used in filename of QR code SVG.
-export function save_qr(jwt, base_url='', nbf_string=null, exp_string=null, filename_prefix='qr ') {
+export function save_qr(jwt, base_url='', nbf_string=null, exp_string=null, filename_prefix='qr ', type='svg') {
   const payload = verify(jwt);
   let f = filename_prefix;
   if (payload.sub != undefined) f += payload.sub;
@@ -58,13 +58,20 @@ export function save_qr(jwt, base_url='', nbf_string=null, exp_string=null, file
   if (payload.exp != undefined) f += ' to ' + (exp_string || payload.nbf);
   f = f.trim();
   f = f.replace(/:/g, '-');
-  f += '.svg';
   let url = base_url + jwt;
-  qrcode.toFile(f, url, {type:'svg'}, (err) => {
-    if (!err) {
-      appendFileSync(f, `<!--\n${url}\n-->\n`); // add url to svg (as comment)
-    }
-  });
+  if (type == 'txt') {
+    writeFileSync(f + '.txt', `${url}`);
+  } else if (type == 'transparent-png') {
+    qrcode.toFile(f + ' transparent.png', url, {type:'png', width:2160, color:{ dark:"#000", light:"#0000" }});
+  } else if (type == 'png') {
+    qrcode.toFile(f + '.png', url, {type:'png', width:2160 });
+  } else {
+    qrcode.toFile(f + '.svg', url, {type:'svg'}, (err) => {
+      if (!err) {
+        appendFileSync(f + '.svg', `<!--\n${url}\n-->\n`); // add url to svg (as comment)
+      }
+    });
+  }
   return url;
 }
 
