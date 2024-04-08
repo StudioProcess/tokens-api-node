@@ -32,7 +32,6 @@ async function interact() {
     const res = await request('/request_interaction', {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
       responseType: 'json',
-      retry: 0
     });
     const int = res.body;
     console.log('got interaction', int);
@@ -47,7 +46,6 @@ async function interact() {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
       searchParams: deposit,
       responseType: 'json',
-      retry: 0
     });
     
     console.log('listening for updates...');
@@ -59,7 +57,6 @@ async function interact() {
           headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
           searchParams: { id: deposit.id, since: seq, timeout:CONFIG.update_timeout },
           responseType: 'json',
-          retry: 0
         });
         const update = res3.body;
         console.log('update:', update);

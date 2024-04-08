@@ -44,7 +44,6 @@ async function handle_waiting_interactions() {
     headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
     searchParams: { since: (new Date(Date.now() - 24*3600*1000)).toISOString() },
-    retry: 0
   });
   for (let int of res.body) {
     console.log('waiting interaction:', int);
@@ -58,7 +57,6 @@ async function handle_new_interactions() {
     headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
     responseType: 'json',
     searchParams: {since: seq, timeout: CONFIG.longpoll_timeout},
-    retry: 0
   });
   try {
     let res = await interaction_update_request;
@@ -115,7 +113,6 @@ async function generate() {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
       responseType: 'json',
       searchParams: { id: int.id, queue_position: 0, token_id: id },
-      retry: 0
     }));
     // these move up in the queue
     queue.forEach( (int, idx) => {
@@ -123,7 +120,6 @@ async function generate() {
         headers: { Authorization: `Bearer ${AUTH_TOKEN}`},
         responseType: 'json',
         searchParams: { id: int.id, queue_position: idx + 1 },
-        retry: 0,
       }));
     });
     

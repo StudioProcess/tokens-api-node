@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import got from 'got';
+import got, { HTTPError } from 'got';
 import { short_id, sleep, rnd, id_in, id_out, timestamp } from './util.mjs';
 
 export const CONFIG = JSON.parse(readFileSync('./config/main.config.json'));
@@ -166,7 +166,7 @@ export async function put_token(token, max_retries = 10) {
       return { id: id_out(res.body.id) };
     } catch (e) {
       // 409 Conflict: A Conflicting Document with same ID already exists
-      if (e instanceof got.HTTPError && e.response.statusCode == 409 && retries < max_retries) {
+      if (e instanceof HTTPError && e.response.statusCode == 409 && retries < max_retries) {
         retries++;
         await sleep( rnd(1,100*retries) ); // limit token generation rate (ensures next id is unique)
         continue; // try again

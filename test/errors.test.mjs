@@ -11,7 +11,7 @@ tap.before(async () => {
   tokens = await test_util.setup_mock_db();
   // make requests fail faster
   db.DB.request_options = {
-    retry: 0
+    retry: { limit: 0 }
   };
   // start server
   await test_util.start_server();
@@ -31,7 +31,6 @@ tap.test('get token (errors)', async t => {
     await got('/token', {
       responseType: 'json',
       searchParams: { id: tokens[0].id },
-      retry: 0
     });
     t.fail('should throw');
   } catch (e) {
@@ -73,7 +72,6 @@ tap.test('get token (errors)', async t => {
   try {
     await got('/token', {
       responseType: 'json',
-      retry: 0,
       searchParams: { id: 'abcdef' }
     });
     t.fail('should throw');
@@ -242,7 +240,7 @@ tap.test('get new interaction updates (errors)', async t => {
   // run this test before new interactions are deposited
   try {
     let res = await db.request_interaction();
-    res = await got('/new_interaction_updates', {responseType: 'json', retry: 0, searchParams: {timeout:100}});
+    res = await got('/new_interaction_updates', {responseType: 'json', searchParams: {timeout:100}});
     t.fail('should throw');
   } catch (e) {
     t.equal(e.response.statusCode, 504, 'timeout');
@@ -302,7 +300,7 @@ tap.test('request interaction (errors)', async t => {
 
 tap.test('deposit interaction (errors)', async t => {
   try {
-    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'invalid', keywords:'a,b,c'}});
+    let res = await got('/deposit_interaction', {responseType: 'json', searchParams: {id:'invalid', keywords:'a,b,c'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -311,7 +309,7 @@ tap.test('deposit interaction (errors)', async t => {
     }, 'invalid id');
   }
   try {
-    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'', keywords:'a,b,c'}});
+    let res = await got('/deposit_interaction', {responseType: 'json', searchParams: {id:'', keywords:'a,b,c'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -320,7 +318,7 @@ tap.test('deposit interaction (errors)', async t => {
     }, 'missing id (1)');
   }
   try {
-    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {keywords:'a,b,c'}});
+    let res = await got('/deposit_interaction', {responseType: 'json', searchParams: {keywords:'a,b,c'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -329,7 +327,7 @@ tap.test('deposit interaction (errors)', async t => {
     }, 'missing id (2)');
   }
   try {
-    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0});
+    let res = await got('/deposit_interaction', {responseType: 'json'});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -338,7 +336,7 @@ tap.test('deposit interaction (errors)', async t => {
     }, 'missing id (3)');
   }
   try {
-    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {keywords:'', id:'xyz'}});
+    let res = await got('/deposit_interaction', {responseType: 'json', searchParams: {keywords:'', id:'xyz'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -347,7 +345,7 @@ tap.test('deposit interaction (errors)', async t => {
     }, 'missing keywords (1)');
   }
   try {
-    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz'}});
+    let res = await got('/deposit_interaction', {responseType: 'json', searchParams: {id:'xyz'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -356,7 +354,7 @@ tap.test('deposit interaction (errors)', async t => {
     }, 'missing keywords (2)');
   }
   try {
-    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', keywords:'one'}});
+    let res = await got('/deposit_interaction', {responseType: 'json', searchParams: {id:'xyz', keywords:'one'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -365,7 +363,7 @@ tap.test('deposit interaction (errors)', async t => {
     }, 'not enough keywords (1)');
   }
   try {
-    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', keywords:'one,two'}});
+    let res = await got('/deposit_interaction', {responseType: 'json', searchParams: {id:'xyz', keywords:'one,two'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -374,7 +372,7 @@ tap.test('deposit interaction (errors)', async t => {
     }, 'not enough keywords (2)');
   }
   try {
-    let res = await got('/deposit_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', keywords:'one,two,three,four'}});
+    let res = await got('/deposit_interaction', {responseType: 'json', searchParams: {id:'xyz', keywords:'one,two,three,four'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -386,7 +384,7 @@ tap.test('deposit interaction (errors)', async t => {
 
 tap.test('get single interaction updates (errors)', async t => {
   try {
-    let res = await got('/interaction_updates', {responseType: 'json', retry: 0, searchParams: {id:''}});
+    let res = await got('/interaction_updates', {responseType: 'json', searchParams: {id:''}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -395,7 +393,7 @@ tap.test('get single interaction updates (errors)', async t => {
     }, 'missing id (1)');
   }
   try {
-    let res = await got('/interaction_updates', {responseType: 'json', retry: 0});
+    let res = await got('/interaction_updates', {responseType: 'json'});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -404,7 +402,7 @@ tap.test('get single interaction updates (errors)', async t => {
     }, 'missing id (2)');
   }
   try {
-    let res = await got('/interaction_updates', {responseType: 'json', retry: 0, searchParams: {id: 'xyz'}});
+    let res = await got('/interaction_updates', {responseType: 'json', searchParams: {id: 'xyz'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -414,7 +412,7 @@ tap.test('get single interaction updates (errors)', async t => {
   }
   try {
     let res = await db.request_interaction();
-    res = await got('/interaction_updates', {responseType: 'json', retry: 0, searchParams: {id:res.id, timeout:100}});
+    res = await got('/interaction_updates', {responseType: 'json', searchParams: {id:res.id, timeout:100}});
     t.fail('should throw');
   } catch (e) {
     t.equal(e.response.statusCode, 504, 'timeout');
@@ -423,7 +421,7 @@ tap.test('get single interaction updates (errors)', async t => {
 
 tap.test('update interaction (errors)', async t => {
   try {
-    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:''}});
+    let res = await got('/update_interaction', {responseType: 'json', searchParams: {id:''}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -432,7 +430,7 @@ tap.test('update interaction (errors)', async t => {
     }, 'missing id (1)');
   }
   try {
-    let res = await got('/update_interaction', {responseType: 'json', retry: 0});
+    let res = await got('/update_interaction', {responseType: 'json'});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -441,7 +439,7 @@ tap.test('update interaction (errors)', async t => {
     }, 'missing id (2)');
   }
   try {
-    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz'}});
+    let res = await got('/update_interaction', {responseType: 'json', searchParams: {id:'xyz'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -450,7 +448,7 @@ tap.test('update interaction (errors)', async t => {
     }, 'missing params');
   }
   try {
-    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', queue_position:-1}});
+    let res = await got('/update_interaction', {responseType: 'json', searchParams: {id:'xyz', queue_position:-1}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -459,7 +457,7 @@ tap.test('update interaction (errors)', async t => {
     }, 'negative queue position');
   }
   try {
-    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', queue_position:''}});
+    let res = await got('/update_interaction', {responseType: 'json', searchParams: {id:'xyz', queue_position:''}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -468,7 +466,7 @@ tap.test('update interaction (errors)', async t => {
     }, 'empty queue position');
   }
   try {
-    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', queue_position:'', token_id:'abc'}});
+    let res = await got('/update_interaction', {responseType: 'json', searchParams: {id:'xyz', queue_position:'', token_id:'abc'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -478,7 +476,7 @@ tap.test('update interaction (errors)', async t => {
   }
   try {
     let int = await db.request_interaction();
-    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:int.id, queue_position:'', token_id:'abc'}});
+    let res = await got('/update_interaction', {responseType: 'json', searchParams: {id:int.id, queue_position:'', token_id:'abc'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -488,7 +486,7 @@ tap.test('update interaction (errors)', async t => {
   }
   try {
     let int = await db.request_interaction();
-    let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:int.id, token_id:'abc'}});
+    let res = await got('/update_interaction', {responseType: 'json', searchParams: {id:int.id, token_id:'abc'}});
     t.fail('should throw');
   } catch (e) {
     t.match(e.response, {
@@ -499,7 +497,7 @@ tap.test('update interaction (errors)', async t => {
 
   
   // try {
-  //   let res = await got('/update_interaction', {responseType: 'json', retry: 0, searchParams: {id:'xyz', queue_position:0}});
+  //   let res = await got('/update_interaction', {responseType: 'json', searchParams: {id:'xyz', queue_position:0}});
   //   t.fail('should throw');
   // } catch (e) {
   //   t.match(e.response, {

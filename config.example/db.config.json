@@ -5,6 +5,6 @@
   "tokens_db": "tokens",
   "interactions_db": "interactions",
   "request_options": {
-    "retry": 1
+    "retry": { "limit": 1 }
   }
 }

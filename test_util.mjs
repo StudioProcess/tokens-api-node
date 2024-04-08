@@ -114,13 +114,15 @@ export function stop_generator() {
 // Version of the got function
 // Uses server url from config - only path is needed
 // Allows self signed certificates
+// Sets retry to 0 for faster testing
 // Note: Not defined async (no need, since it doesn't use await). Async removes cancel method from returned promise
 export function request(path='', options = {}) {
   const is_localhost = ['localhost', '127.0.0.1', '0.0.0.0'].includes(MAIN_CONFIG.host);
   options = Object.assign({
     https: {
       rejectUnauthorized: !is_localhost // allow self signed cert locally
-    }
+    },
+    retry: { limit: 0 }
   }, options);
   const url = `${MAIN_CONFIG.https.enabled ? 'https' : 'http'}://${MAIN_CONFIG.host}:${MAIN_CONFIG.port}`;
   return got(url + path, options);

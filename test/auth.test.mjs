@@ -33,7 +33,7 @@ tap.before(async () => {
   tokens = await test_util.setup_mock_db();
   // make requests fail faster
   db.DB.request_options = {
-    retry: 0
+    retry: { limit: 0 }
   };
   // start server
   process.env.JWT_SECRET = secret; // override secret to be used
