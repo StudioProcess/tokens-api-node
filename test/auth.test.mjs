@@ -261,7 +261,7 @@ tap.test('auth allowlist', async t => {
     });
     t.fail('should throw');
   } catch (e) {
-    t.notEqual(e.response.statusCode, 200, 'expired');
+    t.not(e.response.statusCode, 200, 'expired');
   }
   
   main.CONFIG.auth.allow = [ jwt.expired ];
@@ -278,6 +278,6 @@ tap.test('auth allowlist', async t => {
     });
     t.fail('should throw');
   } catch (e) {
-    t.notEqual(e.response.statusCode, 200, 'invalid token');
+    t.not(e.response.statusCode, 200, 'invalid token');
   }
 });

@@ -10,3 +10,4 @@ config/auth.secret
 
 .tmp/
 export-*
+.tap

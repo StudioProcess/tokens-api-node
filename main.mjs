@@ -3,7 +3,7 @@ import http from 'http';
 import https from 'https';
 import { readFileSync } from 'fs';
 import express from 'express';
-import jwt from 'express-jwt';
+import { expressjwt as jwt } from 'express-jwt';
 import cors from 'cors';
 import * as db from './db.mjs';
 import { pick, sleep, git_sha, svg_width } from './util.mjs';
@@ -66,14 +66,14 @@ function require_sub(...subs) {
       // pass if auth is disabled or no subjects are required
       if (CONFIG.auth.enabled === false || subs.length == 0) { next(); return; }
       // check if token subject is one of the required subjects
-      // console.log('got sub:', req.user.sub);
-      if ( !subs.includes(req.user.sub) ) {
+      // console.log('got sub:', req.auth.sub);
+      if ( !subs.includes(req.auth.sub) ) {
         res.status(403).json({'error': 'wrong subject'});
         return;
       }
       // check if subject isn't expired (issued at or after latest issue date for the role)
       // doesn't apply if no issued_at is defined for a subject
-      if ( req.user.iat < CONFIG.auth.subject_issued_at[req.user.sub] ) {
+      if ( req.auth.iat < CONFIG.auth.subject_issued_at[req.auth.sub] ) {
         res.status(403).json({'error': 'subject expired'});
         return;
       }

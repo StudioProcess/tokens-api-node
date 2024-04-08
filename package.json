@@ -13,19 +13,19 @@
   "author": "Martin Grödl <martin@process.studio> (https://process.studio)",
   "license": "AGPL-3.0",
   "engines": {
-    "node": ">=14.16.1",
-    "npm": ">=7.8.0"
+    "node": ">=20.12.1",
+    "npm": ">=10.5.1"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "express-jwt": "^6.0.0",
-    "got": "^11.8.2",
-    "jsonwebtoken": "^8.5.1",
-    "qrcode": "^1.4.4",
-    "sharp": "^0.28.3"
+    "express": "^4.19.2",
+    "express-jwt": "^8.4.1",
+    "got": "^11.8.6",
+    "jsonwebtoken": "^9.0.2",
+    "qrcode": "^1.5.3",
+    "sharp": "^0.33.3"
   },
   "devDependencies": {
-    "tap": "^15.0.2"
+    "tap": "^18.7.2"
   }
 }
