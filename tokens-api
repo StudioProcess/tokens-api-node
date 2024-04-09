@@ -6,9 +6,12 @@
 DIR=$(dirname $(realpath $0))
 
 service="tokens-api"
+exec_start="$DIR/main.mjs"
+working_directory="$DIR"
 
 # user=$USER # by default run service as user who's installing
 user="root" # run service as root (need access to letsencrypt certs and port 443)
+
 
 # override default user from argument to install command (if supplied)
 if [ "$1" == "install" ]; then
@@ -18,16 +21,16 @@ fi
 service_file="[Unit]
 Description=Web API – Tokens for Climate Care
 Documentation=https://github.com/studioprocess/tokens-api-node
-After=network.target couchdb.service
-Wants=couchdb.service
+After=network.target couchdb.service snap.couchdb.server.service
+Wants=couchdb.service snap.couchdb.server.service
 Conflicts=
 
 [Service]
 Environment=
 Type=simple
 User=$user
-ExecStart=$DIR/main.mjs
-WorkingDirectory=$DIR
+ExecStart=$exec_start
+WorkingDirectory=$working_directory
 Restart=always
 
 [Install]
@@ -48,6 +51,16 @@ usage() {
 if [ $# -eq 0 ]; then
   usage
 fi
+
+
+# Check if node is installed via snap (needed for logs and status)
+# Background: When using the node snap, journalctl won't show node's output for the unit, since snap fires up node in another unit ('snap.node.*')
+[ "$(which node)" == "/snap/bin/node" ]
+NODE_IS_SNAP=$?
+[ $NODE_IS_SNAP -eq 0 ] && SNAP_CMDLINE="$(readlink -f /snap/node/current/bin/node) $DIR/main.mjs"
+# PID of our process; 0 if not running (needed for status)
+PID=$(systemctl show -p MainPID --value ${service}.service)
+
 
 if [ $1 == "install" ] ; then
   echo "[ Installing Script to /usr/local/bin ]"
@@ -80,15 +93,27 @@ elif [ $1 == "restart" ] ; then
   echo "[ Restarting Service ]"
   sudo systemctl restart $service
 elif [ $1 == "status" ] ; then
-  echo "[ Service Service ]"
+  echo "[ Service Status ]"
   sudo systemctl status $service
+  if [[ $NODE_IS_SNAP -eq 0 && $PID -ne 0 ]]; then
+    sudo systemctl status $PID
+  fi
 elif [ $1 == "logs" ] ; then
   echo "[ Service Logs ]"
-  if [ "$2" == "live" ]; then
+  if [ $NODE_IS_SNAP -eq 0 ]; then
+    if [ "$2" == "live" ]; then
+      sudo journalctl "UNIT=${service}.service" + "_CMDLINE=$SNAP_CMDLINE" -e -f
+    else
+      sudo journalctl "UNIT=${service}.service" + "_CMDLINE=$SNAP_CMDLINE" -e
+    fi
+  else
+    if [ "$2" == "live" ]; then
       sudo journalctl -u ${service}.service -e -f
     else
       sudo journalctl -u ${service}.service -e
     fi
+  fi
+
 elif [ $1 == "reload-cert" ] ; then
   echo "[ Reload Certificate ]"
   sudo systemctl kill $service --signal=SIGUSR2
