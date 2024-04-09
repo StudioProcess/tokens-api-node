@@ -8,7 +8,7 @@ DIR=$(dirname $(realpath $0))
 service="tokens-api"
 
 # user=$USER # by default run service as user who's installing
-user="root" # by default, run service as root (need access to letsencrypt certs and port 443)
+user="root" # run service as root (need access to letsencrypt certs and port 443)
 
 # override default user from argument to install command (if supplied)
 if [ "$1" == "install" ]; then
@@ -53,7 +53,7 @@ if [ $1 == "install" ] ; then
   echo "[ Installing Script to /usr/local/bin ]"
   sudo ln -sf $(realpath $0) /usr/local/bin/$(basename $0)
   echo "[ Installing Service File ]"
-  sudo echo "$service_file" > /etc/systemd/system/${service}.service
+  echo "$service_file" | sudo tee /etc/systemd/system/${service}.service > /dev/null
   echo "[ Enabling Service ]"
   sudo systemctl enable $service
   echo "Important: Service will be run as user: $user"
