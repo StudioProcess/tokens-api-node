@@ -45,7 +45,7 @@ function date_str(date) {
     + String(date.getDate()).padStart(2, '0')
 }
 
-export function make_qr(nbf=null, exp=null, filename_prefix='qr ', subject='exhibition', base_url='https://tokensforclimate.care/generate/?auth=') {
+export function make_qr(nbf=null, exp=null, filename_prefix='qr ', subject='exhibition', base_url='https://tokensforclimate.care/create/?auth=') {
   const jwt = make(subject, nbf, exp);
   const payload = verify(jwt);
   console.log(payload);
