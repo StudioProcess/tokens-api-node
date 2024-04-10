@@ -43,7 +43,7 @@ usage() {
   echo "  Enable/Disable:     $0 enable|disable"
   echo "  Start/Stop/Restart: $0 start|stop|restart"
   echo "  Status:             $0 status"
-  echo "  Logs:               $0 logs [live]"
+  echo "  Logs:               $0 log[s] [live]"
   echo "  Reload Certificate: $0 reload-cert"
   exit
 }
@@ -55,6 +55,7 @@ fi
 
 # Check if node is installed via snap (needed for logs and status)
 # Background: When using the node snap, journalctl won't show node's output for the unit, since snap fires up node in another unit ('snap.node.*')
+# See: https://askubuntu.com/questions/1467887/journalctl-doesnt-show-logs-of-a-snap
 [ "$(which node)" == "/snap/bin/node" ]
 NODE_IS_SNAP=$?
 [ $NODE_IS_SNAP -eq 0 ] && SNAP_CMDLINE="$(readlink -f /snap/node/current/bin/node) $DIR/main.mjs"
@@ -95,25 +96,13 @@ elif [ $1 == "restart" ] ; then
 elif [ $1 == "status" ] ; then
   echo "[ Service Status ]"
   sudo systemctl status $service
-  if [[ $NODE_IS_SNAP -eq 0 && $PID -ne 0 ]]; then
-    sudo systemctl status $PID
-  fi
-elif [ $1 == "logs" ] ; then
+  [[ $NODE_IS_SNAP -eq 0 && $PID -ne 0 ]] && sudo systemctl status $PID
+elif [[ $1 == "logs?" || $1 == "log" ]] ; then
   echo "[ Service Logs ]"
-  if [ $NODE_IS_SNAP -eq 0 ]; then
-    if [ "$2" == "live" ]; then
-      sudo journalctl "UNIT=${service}.service" + "_CMDLINE=$SNAP_CMDLINE" -e -f
-    else
-      sudo journalctl "UNIT=${service}.service" + "_CMDLINE=$SNAP_CMDLINE" -e
-    fi
-  else
-    if [ "$2" == "live" ]; then
-      sudo journalctl -u ${service}.service -e -f
-    else
-      sudo journalctl -u ${service}.service -e
-    fi
-  fi
-
+  args=("-u" "${service}.service" "-e") # use array so we can add args with spaces (_CMDLINE)
+  [ $NODE_IS_SNAP -eq 0 ] && args=("UNIT=${service}.service" "+" "_CMDLINE=$SNAP_CMDLINE" "-e")
+  [ "$2" == "live" ] && args+=("-f") # add "follow" argument
+  sudo journalctl "${args[@]}"
 elif [ $1 == "reload-cert" ] ; then
   echo "[ Reload Certificate ]"
   sudo systemctl kill $service --signal=SIGUSR2
